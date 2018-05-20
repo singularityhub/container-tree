@@ -16,21 +16,20 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from containertree import ContainerDiffTree
+import requests
 
-###############################################################################
-# Main
+# Path to database of container-api 
+database = "https://singularityhub.github.io/api/files"
+containers = requests.get(database).json()
+entry = containers[0]  
 
+# Google Container Diff Structure
+tree = ContainerDiffTree(entry['url'])
 
-if __name__ == "__main__":
+# To find a node based on path
+tree.find('/etc/ssl')
+# Node<ssl>
 
-    # Path to database of container-api 
-    database = "https://singularityhub.github.io/api/files"
-    containers = requests.get(database).json()
-    
-    # Container data files
-    for entry in containers:
-
-        if entry:
-
-            # Google Container Diff Structure
-            tree = ContainerDiffTree(entry['url'])
+# Trace a path, returning all nodes
+tree.trace('/etc/ssl')
+# [Node<etc>, Node<ssl>]
