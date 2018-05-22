@@ -2,7 +2,7 @@
 
 This is a library that demonstrates using the [Container API](https://singularityhub.github.io/api/) served by the Singularity Hub robots! Specifically, we can use the API
 to grab lists of container files on Singularity Hub, and then using the
-[ContainerTree](containertree/tree.py) classes, generate a [Trie](https://en.wikipedia.org/wiki/Trie) to represent the file hierarchy. We can generate [trees](https://singularityhub.github.io/container-tree/examples/files_tree/demo/), but we can also generate comparison matrices using them!
+[ContainerTree](containertree/tree.py) classes, generate a [Trie](https://en.wikipedia.org/wiki/Trie) to represent the file hierarchy. We can generate [trees](https://singularityhub.github.io/container-tree/examples/files_tree/demo/), but we can also generate [comparison matrices](https://singularityhub.github.io/container-tree/examples/heatmap/demo/) using them!
 
 ![examples/heatmap/heatmap.png](examples/heatmap/heatmap.png)
 
