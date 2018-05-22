@@ -22,7 +22,7 @@ import json
 
 class ContainerTree(object):
 
-    def __init__(self, filelist, folder_sep='/'):
+    def __init__(self, filelist, folder_sep='/', tag=None):
         '''construct a container tree from a container-diff
            export of flies. See "load" for the logic to construct
            the tree.
@@ -31,11 +31,14 @@ class ContainerTree(object):
            ==========
            filelist: the json export (files.json) of a tar, can be https
            folder_sep: the character that separates path names
-
+           tag: if defined, ascribe a unique id to the list at each node
+                to identify the container. We can add other containers to
+                the count.
+ 
         '''
 
         # The root node is the root of the fs
-        self.root = Node('', {'size': 0, 'Name': '/'})
+        self.root = Node('', {'size': 0, 'Name': '/'}, tag=tag)
         self.data = None
         
         # The character that separates folder/files
@@ -43,13 +46,13 @@ class ContainerTree(object):
 
         # Count the nodes
         self.count = 1
-
+        
         # Sets self.data and builds self.tree
         self.load(filelist)
 
         # If data is loaded, make the tree
         if self.data:
-            self._make_tree()
+            self._make_tree(tag=tag)
 
 
 # Loading Functions
@@ -78,8 +81,14 @@ class ContainerTree(object):
         return data
 
 
-    def update(self, filelist):
+    def update(self, filelist, tag=None):
         '''update will load in new data (without distributing an old self.data)
+
+           Parameters
+           ==========
+           filelist: the list of files (json/url export from ContainerDiff
+           tag: if defined, a tag or label to identify
+
         '''
         data = None
 
@@ -98,7 +107,7 @@ class ContainerTree(object):
 
         if data:
             data = self._load(data)
-            self._make_tree(data=data)
+            self._make_tree(data=data, tag=tag)
 
 
     def load(self, filelist):
@@ -144,18 +153,18 @@ class ContainerTree(object):
         return "ContainerTree<%s>" % self.count
 
 
-    def insert(self, filepath, attrs=None):
+    def insert(self, filepath, attrs=None, tag=None):
         '''insert a node into the tree.
         '''
-        entry = {'Name': filepath }
+        entry = { 'Name': filepath }
         if attrs is not None:
             for key,val in attrs.items():
                 entry[key] = val
 
-        self._make_tree(data=[entry])
+        self._make_tree(data=[entry], tag=tag)
     
 
-    def _make_tree(self, data=None):
+    def _make_tree(self, data=None, tag=None):
         '''construct the tree from the loaded data (self.data)
            we should already have a root defined.
         '''
@@ -179,7 +188,7 @@ class ContainerTree(object):
                 # We are at the root
                 if filepath == node.filepath:
                     found = True             
-
+                    
                 else:
 
                     # Search in present node
@@ -207,6 +216,12 @@ class ContainerTree(object):
 
                     # Keep working down the tree
                     node = new_node
+
+
+                # Add the tag to the new (or existing) node
+                if tag is not None:
+                    if tag not in node.tags:
+                        node.tags.add(tag)
 
             # The last in the list is the leaf (file)
             node.leaf = True
@@ -242,6 +257,7 @@ class ContainerTree(object):
             new_node = {'color': choice(colors),
                         'key': current.name,
                         'name': current.name.split('/')[-1],
+                        'tags': current.tags,
                         'size': current.size,
                         'attrs': current.get_attributes(),
                         'children': [] }
@@ -270,6 +286,54 @@ class ContainerTree(object):
 
 
 # Searching Functions
+
+    def similarity_score(self, tags):
+        '''calculate a similarity score for one or more tags. The score is
+           a basic information coefficient where we take into account:
+ 
+           1/ the number of total nodes in context of the tags, meaning
+              we add any node that has one or more of containers there
+           2/ the number of nodes where the tags are all present
+           3/ the number of nodes where one or more tags are missing
+
+        '''
+        total = 0       # total number of nodes with one or more
+        intersect = 0   # all tags present at nodes
+        diff = 0        # one or more tags missing
+
+        def traverse(tags, current, total, intersect, diff):
+ 
+            # All tags are represented in the node
+            if all(t in current.tags for t in tags):
+                intersect+=1
+            else:
+                diff+=1
+
+            # If any of the tags are present, we add to total
+            if any(t in current.tags for t in tags):
+                total+=1
+
+            # Iterate through children, add to data structure
+            for child in current.children:
+                total,intersect,diff = traverse(tags, child, total, intersect, diff)
+
+            return total, intersect, diff
+
+        # Return data structure so the user knows the components
+        total, intersect, diff = traverse(tags, self.root, total, intersect, diff)
+ 
+        result = {'total': total, 
+                  'tags': tags,
+                  'same': intersect,
+                  'diff': diff }
+
+        # Calculate score, percentage of nodes shared
+
+        result['score'] = 0
+        if total > 0:
+           result['score'] = intersect / total
+
+        return result
 
 
     def trace(self, filepath):
@@ -383,7 +447,7 @@ class ContainerDiffTree(ContainerTree):
 
 class Node(object):
     
-    def __init__(self, filepath, attrs):
+    def __init__(self, filepath, attrs, tag=None):
         ''' a Node is a node in the Trie, meaning that
             it stores a word (a folder or file) and some
             number of children from it. If a Node is a leaf 
@@ -393,6 +457,7 @@ class Node(object):
             ==========
             filepath: the name of the folder or file
             attrs: a dict of attributes to give to the node
+            tag: a tag or label (goes into a list) to identify objects belonging
 
         '''
         self.filepath = filepath
@@ -402,6 +467,11 @@ class Node(object):
         # The end of the file path
         self.leaf = False
 
+        # If the tag is defined, tag the node
+        self.tags = set()
+        if tag is not None:
+            self.tags.add(tag)
+
         # How many times this character appeared in the addition process
         self.counter = 1
 
@@ -410,6 +480,20 @@ class Node(object):
     def __repr__(self):
         return "Node<%s>" % self.filepath
     
+
+    def has(tag):
+        '''determine if a node has a tag
+        '''
+        # All supplied tags are in the list
+        if isinstance(tag, list):
+            if all(tag) in self.tags:
+                return True
+
+        # The single tag is in the list
+        if tag in self.tags:
+            return True
+        return False
+              
 
     def get_attributes(self):
         '''return all attributes of the node (aside from children)'''
