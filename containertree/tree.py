@@ -16,6 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from random import choice
 import requests
 import json
 
@@ -34,7 +35,7 @@ class ContainerTree(object):
         '''
 
         # The root node is the root of the fs
-        self.root = Node('', {'size': 0})
+        self.root = Node('', {'size': 0, 'Name': '/'})
         self.data = None
         
         # The character that separates folder/files
@@ -74,6 +75,7 @@ class ContainerTree(object):
         # Read in the raw data file
         with open(filelist) as filey:
             self.data = json.load(filey)
+
 
     def load(self, filelist):
         ''' Load a set of files from json into the container tree.
@@ -117,13 +119,28 @@ class ContainerTree(object):
     def __repr__(self):
         return "ContainerTree<%s>" % self.count
 
+
+    def insert(self, filepath, attrs=None):
+        '''insert a node into the tree.
+        '''
+        entry = {'Name': filepath }
+        if attrs is not None:
+            for key,val in attrs.items():
+                entry[key] = val
+
+        self._make_tree(data=[entry])
     
-    def _make_tree(self):
+
+    def _make_tree(self, data=None):
         '''construct the tree from the loaded data (self.data)
            we should already have a root defined.
         '''
 
-        for attrs in self.data:
+        # If function is used for insert, called
+        if data is None:
+            data = self.data
+
+        for attrs in data:
 
             # The starting node is the root node
             node = self.root
@@ -171,12 +188,80 @@ class ContainerTree(object):
             node.leaf = True
 
 
+    def export_tree(self, filename=None):
+        '''export a data structure for a weighted, colored tree, either just
+           the data or the full html / visualization. If filename is defined,
+           export the raw data json to the file. If the generate_html is
+           True, do the same but embed in html.
+
+           Parameters
+           ==========
+           filename: if defined, write data to file (and return) otherwise
+           return data structure
+
+        '''
+
+        # We will call this recursively
+ 
+        def traverse(nodes={}, current=None):
+
+            colors = ['#0000FF', # blue
+                      '#FF7F00', # orange
+                      '#FF0000', # red
+                      '#7F007F', # purple
+                      '#00FFFF', # cyan
+                      '#0560D0'] # generic blue
+
+            if current is None:
+                current = self.root
+
+            new_node = {'color': choice(colors),
+                        'key': current.name,
+                        'name': current.name.split('/')[-1],
+                        'size': current.size,
+                        'attrs': current.get_attributes(),
+                        'children': [] }
+
+            if len(nodes) == 0:
+                nodes.update(new_node)
+            else:            
+                nodes['children'].append(new_node)
+
+            # Iterate through children, add to data structure
+            for child in current.children:
+                traverse(nodes=new_node, current=child)
+
+        nodes = dict()
+
+        if self.data:
+            traverse(nodes, current=self.root)
+                
+        # If the user provided a file, export to it
+        if filename is not None:
+            with open(filename, 'w') as filey:
+                filey.writelines(json.dumps(nodes))
+            return filename
+
+        return nodes
+
+
 # Searching Functions
 
     def trace(self, filepath):
         '''trace a path in the tree, return all nodes up to it.
         '''
         return self.find(filepath, trace=True)
+
+
+    def get_count(self, filepath):
+        '''find a path in the tree and return the node if found
+        '''
+        counter = 0
+        node = self.find(filepath)
+        if node:
+            counter = node.counter
+        return counter
+
 
     def find(self, filepath, trace=False):
         '''find a path in the tree and return the node if found
@@ -221,7 +306,7 @@ class ContainerTree(object):
                             traces.append(node)
 
                         # If the name is what we are looking for, return Node
-                        if node.Name == assembled:
+                        if node.name == assembled:
                             if trace is True:
                                 return traces
                             return node
@@ -298,6 +383,13 @@ class Node(object):
     def __repr__(self):
         return "Node<%s>" % self.filepath
     
+
+    def get_attributes(self):
+        '''return all attributes of the node (aside from children)'''
+        ats = {key:val for key,val in self.__dict__.items() if key!="children"}
+        return ats
+
+
     def set_attributes(self, attrs):
         '''Set a variable number of attributes, likely
            size of the file/folder
@@ -309,4 +401,4 @@ class Node(object):
         '''
 
         for name, value in attrs.items():
-            self.__setattr__(name, value)
+            self.__setattr__(name.lower(), value)

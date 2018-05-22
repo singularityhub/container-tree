@@ -34,8 +34,11 @@ structure under "Analysis". For example:
 We are only interested in the list under "Analysis."
 
 
-## Example
-This example is also provided in [example.py](example.py)
+## Examples
+
+### Create a Tree
+
+These examples are also provided in the [examples](examples) folder.
 
 ```python
 from containertree import ContainerDiffTree
@@ -56,5 +59,33 @@ tree.find('/etc/ssl')
 # Trace a path, returning all nodes
 tree.trace('/etc/ssl')
 # [Node<etc>, Node<ssl>]
+
+# Insert a new node path
+tree.insert('/etc/tomato')
+tree.trace('/etc/tomato')
+#[Node<etc>, Node<tomato>]
+
+# Get count of a node
+tree.get_count('/etc/tomato')
+# 1
+tree.insert('/etc/tomato')
+tree.get_count('/etc/tomato')
+# 2
+```
+
+### Visualize a Tree
+
+```python
+from containertree import ContainerDiffTree
+import requests
+
+# Path to database of container-api 
+database = "https://singularityhub.github.io/api/files"
+containers = requests.get(database).json()
+entry = containers[0]  
+
+# Google Container Diff Structure
+tree = ContainerDiffTree(entry['url'])
+# ContainerTree<38008>
 ```
 
