@@ -78,7 +78,7 @@ These are under development! Here are some quick examples:
 
  - [General Tree](https://singularityhub.github.io/container-tree/examples/tree/demo/)
  - [Files Tree](https://singularityhub.github.io/container-tree/examples/files_tree/demo/)
- - [Shub Tree](https://singularityhub.github.io/container-tree/examples/files_tree/demo/)
+ - [Shub Tree](https://singularityhub.github.io/container-tree/examples/shub_tree/demo/)
 
 And a general example for how to use a template.
 
