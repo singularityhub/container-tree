@@ -247,6 +247,7 @@ class ContainerTree(object):
 
 # Searching Functions
 
+
     def trace(self, filepath):
         '''trace a path in the tree, return all nodes up to it.
         '''

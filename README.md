@@ -75,6 +75,8 @@ tree.get_count('/etc/tomato')
 
 ### Visualize a Tree
 
+[DEMO](https://singularityhub.github.io/container-tree/examples/tree/demo/)
+
 ```python
 from containertree import ContainerDiffTree
 import requests
