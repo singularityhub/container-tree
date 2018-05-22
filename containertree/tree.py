@@ -62,7 +62,7 @@ class ContainerTree(object):
 
         if response.status_code == 200:
             try:
-                self.data = response.json()
+                return response.json()
             except json.JSONDecodeError:
                 print('The web address must be for json!')
                 sys.exit(1)
@@ -74,7 +74,31 @@ class ContainerTree(object):
 
         # Read in the raw data file
         with open(filelist) as filey:
-            self.data = json.load(filey)
+            data = json.load(filey)
+        return data
+
+
+    def update(self, filelist):
+        '''update will load in new data (without distributing an old self.data)
+        '''
+        data = None
+
+        # Load data from web / url
+        if filelist.startswith('http'):
+            data = self._load_http(filelist)
+
+        # Load data from file
+        elif os.path.exists(filelist):
+            if filelist.endswith('json'):
+                data = self._load_file(filelist)
+
+        # If we have loaded data, continue
+        else:
+            print('Error loading %s' %filelist)
+
+        if data:
+            data = self._load(data)
+            self._make_tree(data=data)
 
 
     def load(self, filelist):
@@ -92,26 +116,26 @@ class ContainerTree(object):
 
         # Load data from web / url
         if filelist.startswith('http'):
-            self._load_http(filelist)
+            self.data = self._load_http(filelist)
 
         # Load data from file
         elif os.path.exists(filelist):
             if filelist.endswith('json'):
-                self._load_file(filelist)
+                self.data = self._load_file(filelist)
 
         # If we have loaded data, continue
         else:
             print('Error loading %s' %filelist)
 
         if self.data:
-            self._load()
+            self.data = self._load()
 
 
-    def _load(self):
+    def _load(self, data=None):
         '''a function called by load, intended for subclass to call if additional
            parsing is needed.
         '''
-        pass
+        return self.data
 
 
     def __str__(self):
@@ -327,32 +351,34 @@ class ContainerDiffTree(ContainerTree):
 
     '''
 
-    def _load(self):
+    def _load(self, data=None):
         ''' class instantiated by subclass to do custom parsing of loaded data.
             In the case of Google container diff, whether from local file
             or web http, we need to index the list at 1 (only one in
             list since a Singularity container is one tar file) and then
             index the list of files at the "Analysis" key.
         '''
+        if data is None:
+            data = self.data
 
-        if not self.data:
+        if not data:
             print('This function should be called with load() to define data.')
             sys.exit(1)
 
         # User can provide loaded data, as long as correct structure
-        if not isinstance(self.data, list):
+        if not isinstance(data, list):
             print('Loaded Filelist must be list for Container Diff')
         else:
 
             # The user loaded files, but the result is empty
-            if len(self.data) == 0:
+            if len(data) == 0:
                 print('Loaded Filelist is empty')
 
             # Data is stored at 0['Analysis']                
-            if "Analysis" not in self.data[0]:
+            if "Analysis" not in data[0]:
                 print('Analysis key missing, is this ContainerDiff export?')
             else:
-                self.data = self.data[0]['Analysis'] 
+                return data[0]['Analysis'] 
 
 
 class Node(object):

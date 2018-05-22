@@ -74,8 +74,13 @@ tree.get_count('/etc/tomato')
 ```
 
 ### Visualize a Tree
+These are under development! Here are some quick examples:
 
-[DEMO](https://singularityhub.github.io/container-tree/examples/tree/demo/)
+ - [General Tree](https://singularityhub.github.io/container-tree/examples/tree/demo/)
+ - [Files Tree](https://singularityhub.github.io/container-tree/examples/files_tree/demo/)
+ - [Shub Tree](https://singularityhub.github.io/container-tree/examples/files_tree/demo/)
+
+And a general example for how to use a template.
 
 ```python
 from containertree import ContainerDiffTree
