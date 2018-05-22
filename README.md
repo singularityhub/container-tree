@@ -17,6 +17,19 @@ cd container-tree
 python setup.py install
 ```
 
+## Docker
+I've provided a container that contains a Trie (the container tree) with a subset of the
+current Singularity Hub containers (unique collections only, not for specific versions within a collection)
+already generated. This will allow you to select some subset of containers to generate a tree map for! 
+Here is how to use the Docker container.
+
+See the containers represented
+```bash
+docker run vanessa/container-diff
+```
+
+Generate a matrix 
+
 ## ContainerTree
 The `ContainerTree` class is a generic class that expects the input data to be json, 
 either from a file or a http address. The json should have a list of dictionaries, each dictionary representing a complete filepath (e.g., `/etc/ssl`). The key "Name" is required
