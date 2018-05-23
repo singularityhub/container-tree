@@ -51,14 +51,15 @@ with open('run_jobs.sh', 'w') as run_jobs:
 for c in range(len(containers)):
     container = containers[c]
     with open('jobs/run_%s.sh' %c, 'w') as filey:
+        name = container.replace('/','-')
         filey.writelines('#!/bin/bash\n')
-        outfile = '%s/result/%s.pkl' %(here, container)
+        outfile = '%s/result/%s.pkl' %(here, name)
         print ("Processing container %s" %(c))
         # Write job to file
         filey.writelines("#SBATCH --job-name=containertree_%s\n" %(c))
         filey.writelines("#SBATCH --output=%s/jobs/containertree%s.out\n" %(here,c))
         filey.writelines("#SBATCH --error=%s/jobs/containertree%s.err\n" %(here,c))
         filey.writelines("#SBATCH --time=60:00\n")
-        filey.writelines("#SBATCH --mem=12000\n")
+        filey.writelines("#SBATCH --mem=8000\n")
         filey.writelines('ml python/3.6.1\n')
         filey.writelines('python3 %s/run.py %s %s\n' %(here,container,outfile))
