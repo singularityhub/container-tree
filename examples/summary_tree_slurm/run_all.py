@@ -21,11 +21,10 @@
 # We expect to have a pickled tree as first argument (being used in container)
 import pickle
 import json
-import time
 import sys
 import os
 
-database = '/code/database.pkl'
+database = 'database.pkl'
 if not os.path.exists(database):
     print('Database not found at %s' %database)
     sys.exit(1)
@@ -33,39 +32,33 @@ if not os.path.exists(database):
 print('Loading Saved Container Tree:')
 tree = pickle.load(open(database, 'rb'))
 
+here = os.getcwd()
+os.system('mkdir -p result')
+os.system('mkdir -p jobs')
+
 # Do the comparison with the rest
-containers = tree.root.tags
+containers = list(tree.root.tags)
 
 print('%s of containers are found in tree!' %len(containers)) 
 
-score_matrix = []
+# This is a general script to submit the job files
+with open('run_jobs.sh', 'w') as run_jobs:
+    run_jobs.writelines('#!/bin/bash\n')
+    for c in range(len(containers)):
+        run_jobs.writelines('sbatch -p russpold %s/jobs/run_%s.sh\n' %(here, c))
 
-# Now we can generate a little matrix of similarity scores!
-print('Calculating (non optimized) score matrix!')
-for container1 in containers:
-    score_row = []
-    for container2 in containers:
-        tags = [container1, container2]
-        result = tree.similarity_score(tags)
-        score_row.append(result['score'])        
-    score_matrix.append(score_row)
-
-# Create temporary directory and copy file there
-from containertree.utils import get_template
-from containertree.server import serve_template
-import shutil
-import tempfile
-
-# Copy the file to the webroot
-webroot = tempfile.mkdtemp()
-print('Webroot: %s' %webroot)
-template = get_template('heatmap')
-shutil.copyfile(template, "%s/index.html" %webroot)
-
-# Generate the data.json
-print('Exporting data for d3 visualization')
-data = {"data": score_matrix, "X": containers, "Y": containers}
-with open('%s/data.json' %webroot, 'w') as filey:
-    filey.writelines(json.dumps(data))
-
-serve_template(webroot, port=9779)
+# Write a bash file to submit jobs
+for c in range(len(containers)):
+    container = containers[c]
+    with open('jobs/run_%s.sh' %c, 'w') as filey:
+        filey.writelines('#!/bin/bash\n')
+        outfile = '%s/result/%s.pkl' %(here, container)
+        print ("Processing container %s" %(c))
+        # Write job to file
+        filey.writelines("#SBATCH --job-name=containertree_%s\n" %(c))
+        filey.writelines("#SBATCH --output=%s/jobs/containertree%s.out\n" %(here,c))
+        filey.writelines("#SBATCH --error=%s/jobs/containertree%s.err\n" %(here,c))
+        filey.writelines("#SBATCH --time=60:00\n")
+        filey.writelines("#SBATCH --mem=12000\n")
+        filey.writelines('ml python/3.6.1\n')
+        filey.writelines('python3 %s/run.py %s %s\n' %(here,container,outfile))
