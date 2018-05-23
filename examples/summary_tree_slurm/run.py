@@ -22,6 +22,7 @@
 import pickle
 import json
 import time
+import pandas
 import sys
 import os
 
@@ -36,15 +37,14 @@ if not os.path.exists(database):
 print('Loading Saved Container Tree:')
 tree = pickle.load(open(database, 'rb'))
 
-containers = tree.root.tags
-score_row = []
+containers = list(tree.root.tags)
+score_row = pandas.DataFrame(columns=containers)
 
 # Now we can generate a little matrix of similarity scores!
 print('Calculating (non optimized) score matrix!')
 for container2 in containers:
     tags = [container1, container2]
     result = tree.similarity_score(tags)
-    score_row.append(result['score'])        
-    
-saveme = {'row': score_row, 'container': container1, 'containers': containers}
-pickle.dump(saveme, open(outfile,'wb'))
+    score_row.loc[container1, container2] = result['score']
+
+pickle.dump(score_row, open(outfile,'wb'))

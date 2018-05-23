@@ -14,5 +14,6 @@ and **Merged pull requests**. Critical items to know are:
 The versions coincide with releases on pip. Only major versions will be released as tags on Github.
 
 ## [0.0.x](https://github.com/singularityhub/container-tree/tree/master) (0.0.x)
+ - added d3 heatmap view (plotly doesn't handle large datasets) (0.0.03)
  - added tree visualization (with demo) and get_count and insert (0.0.02)
  - original release with simple function to make trie (0.0.01)
