@@ -115,3 +115,9 @@ df['y'] = cols
 
 df.to_csv('data-subset.tsv', sep='\t', index=None)
 
+# Here is how to subset to a specific container (across versions)
+labels = [x for x in plotdf.index if "TomaszGolan/mlmpr" in x]
+subset = plotdf.loc[labels,labels]
+
+sns.clustermap(subset, fmt="g", cmap="YlGnBu")
+plt.show()
