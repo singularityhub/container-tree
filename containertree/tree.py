@@ -67,7 +67,7 @@ class ContainerTree(object):
             try:
                 return response.json()
             except json.JSONDecodeError:
-                print('The web address must be for json!')
+                print('JsonDecodeError of web address!')
                 sys.exit(1)
 
 
@@ -79,6 +79,29 @@ class ContainerTree(object):
         with open(filelist) as filey:
             data = json.load(filey)
         return data
+
+
+    def _load_list(self, filelist):
+        '''load a filelist. If the files are found to exist and Size is not
+           included, calculate it.
+        '''
+        finished = []
+        for entry in filelist:
+
+            # If it's a filepath, convert to dictionary
+            if not isinstance(entry, dict):
+                entry = {'Name': entry}
+
+            if "Name" not in entry:
+                print('Skipping %s, no "Name" provided!' %entry)
+                continue
+
+            # If we don't have a size and the file exists, calculate one
+            if "Size" not in entry and os.path.exists(entry['Name']):
+                entry['Size'] = os.path.getsize(entry['Name'])
+            finished.append(entry) 
+
+        return finished
 
 
     def update(self, filelist, tag=None):
@@ -123,8 +146,12 @@ class ContainerTree(object):
 
         '''
 
+        # The user can also provide a list of dict (files)
+        if isinstance(filelist, list):
+            self.data = self._load_list(filelist)
+
         # Load data from web / url
-        if filelist.startswith('http'):
+        elif filelist.startswith('http'):
             self.data = self._load_http(filelist)
 
         # Load data from file
@@ -258,9 +285,12 @@ class ContainerTree(object):
                         'key': current.name,
                         'name': current.name.split('/')[-1],
                         'tags': current.tags,
-                        'size': current.size,
                         'attrs': current.get_attributes(),
                         'children': [] }
+
+            # Add the size if was provided!
+            if hasattr(current, 'size'):
+                new_node['size'] = current.size
 
             if len(nodes) == 0:
                 nodes.update(new_node)
