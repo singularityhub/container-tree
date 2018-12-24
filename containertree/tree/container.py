@@ -107,7 +107,8 @@ class ContainerTree(ContainerTreeBase):
 
     def find(self, filepath, trace=False):
         '''find a path in the tree and return the node if found. For a Container
-           Tree, we expect a filepath.
+           Tree, we expect a filepath. This must be the absolute filepath.
+           To do a search, use search instead.
         '''
 
         # if the user wants a trace, we return all paths up to it

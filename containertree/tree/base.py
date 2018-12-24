@@ -337,52 +337,68 @@ class ContainerTreeBase(object):
             counter = node.counter
         return counter
 
-
-    def find(self, name, trace=False):
+    def find(self, name, trace=False, node=None):
         '''find a path in the tree and return the node if found.
            This base function is suited for searches that don't build
            on themselves (e.g., not filepaths or words)
- 
-          TODO: write this over to be for generic names...
-        '''
+         '''
 
         # if the user wants a trace, we return all paths up to it
         traces = []
- 
-        # We always start at the root  
-        node = self.root
+        if node == None:
+            node = self.root
 
-        # No children, no search
+        # Did we find a node?
+        if node.label == name:
+            traces.append(node)
+
+        # No children, we finished search
         if len(node.children) == 0:
 
-            # They were looking for the root
-            if node.label == name:
-                return node
-
-            return
+            # Return the node
+            if len(traces) > 0:
+                return traces[0]
+            return traces or None
 
         # Look for the path in the tree
         if name == node.label:
-            return node
+            traces.append(node)
 
-        else:
+        for child in node.children:
+            traces += self.find(name, trace, child)
+        return traces
 
-            #TODO need to write this again
-            # Try and find the name in the tree
-            for child in node.children:
-                if child.label == name:
-                    node = child
 
-                    # Does the user want to return a trace of all nodes?
-                    if trace is True:
-                        traces.append(node)
+    def search(self, name, number=None, node=None):
+        '''find a basename in the tree. If number is defined, return
+           up to that number. 
+        '''
+        found = []
+ 
+        # We always start at the root  
+        if node == None:
+            node = self.root
 
-                    # If the name is what we are looking for, return Node
-                    if node.label == assembled:
-                        if trace is True:
-                            return traces
-                        return node
-            
+        # Look for the name in the current node
+        if name in node.label:
+            found.append(node)
+
+        # No children, no search
+        if len(node.children) == 0:
+            return found
+
+        # Does the user want to cut out early?
+        if number != None:
+            if len(found) >= number:
+                return found
+
+        # Not at current node, search children!
+        for child in node.children:
+            found += self.search(name, number, child)
+            if number != None:
+                if len(found) >= number:
+                    return found
+        return found            
 
 
 class Node(object):

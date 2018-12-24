@@ -146,7 +146,23 @@ we can add containers to the tree based on unique resource identifier (URI).
 from containertree import ContainerFileTree
 
 # Google Container Diff Analysis Type "File" Structure
-tree = ContainerFileTree("vsoch/salad")
+tree = ContainerFileTree("vanessa/salad")
+
+# Find a node directly
+tree.find('/code/salad')
+Node<salad>
+
+# Search for names
+tree.search('salad')
+[Node<salad>, Node<salad>, Node<salad.go>]
+
+# These are different salads!
+for res in tree.search('salad'):
+    print(res.name)
+
+/code/salad
+/go/src/github.com/vsoch/salad
+/go/src/github.com/vsoch/salad/salad.go
 ```
 
 ### Add Containers
