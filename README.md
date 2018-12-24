@@ -1,10 +1,43 @@
 # Container Tree
 
-This is a library that demonstrates using the [Container API](https://singularityhub.github.io/api/) served by the Singularity Hub robots! Specifically, we can use the API
-to grab lists of container files on Singularity Hub, and then using the
-[ContainerTree](containertree/tree.py) classes, generate a [Trie](https://en.wikipedia.org/wiki/Trie) to represent the file hierarchy. We can generate [trees](https://singularityhub.github.io/container-tree/examples/files_tree/demo/), but we can also generate [comparison matrices](https://singularityhub.github.io/container-tree/examples/heatmap/demo/) using them!
+This is a library that demonstrates different methods to build container trees. 
+Across different kinds of trees, we generate a [Trie](https://en.wikipedia.org/wiki/Trie) 
+to represent a file or container hierarchy. We can either generate 
+[trees](https://singularityhub.github.io/container-tree/examples/files_tree/demo/), 
+or [comparison matrices](https://singularityhub.github.io/container-tree/examples/heatmap/demo/) 
+using them!
 
-![examples/heatmap/heatmap.png](examples/heatmap/heatmap.png)
+# Container Trees
+
+## What is a container tree?
+
+In the context of containers, a container tree will map the file system of
+a container into a tree structure. This means that each node represents
+a file path, and holds with it metadata like counts and tags. And yes! This
+means that for a single Container Tree, you can map multiple containers to it,
+and have the nodes tagged with the containers that are represented there.
+For example, we might have this node:
+
+```
+Node
+  name: /usr/local/bin
+  count: 2
+  tags: ["ubuntu", "centos"]
+```
+
+This would say that there are two containers mapped to the tree, ubuntu and
+centos, and both of them have the path /usr/local/bin. We can then calculate
+similarity metrics by walking the tree and comparing containers defined at each
+node. Intuitively, the root node of the tree is the root of a filesystem /.
+
+
+## What is a collection tree?
+
+If you want to move up one level and think about container inheritance (meaning
+the FROM statement in the Dockerfile recipes) you might be interested in a
+Collection tree. In a collection tree, each Node represents a container base,
+and the count is the number of times we find it for some container set that 
+we have parsed. For this kind of tree, the root node is the scratch base image.
 
 ## Install
 
@@ -13,31 +46,30 @@ pip install containertree
 ```
 ```
 git clone https://www.github.com/singularityhub/container.tree
-cd container-tree
+cd container.tree
 python setup.py install
 ```
 
-## Docker
-I've provided a container that contains a Trie (the container tree) with a subset of the
-current Singularity Hub containers (unique collections only, not for specific versions within a collection)
-already generated. This will allow you to select some subset of containers to generate a tree map for! 
-Here is how to use the Docker container.
+# Classes
 
-See the containers represented
-```bash
-docker run vanessa/container-diff
-```
+## ContainerTreeBase
 
-Generate a matrix 
+The `ContainerTreeBase` class is a base class that can read in general lists,
+json, http, or other input data. The function to generate the tree, `_make_tree`,
+is not defined and must be implemented by the subclass. 
+If you want to create a subclass, you can define any additional parsing needed 
+for your input under a function called `_load`. It should check that `self.data` 
+is not None, and if not, expect it to be loaded json from the input. 
+You can continue parsing it and save again the final result to `self.data`. 
+See `ContainerDiffTree` for an example.
+
 
 ## ContainerTree
-The `ContainerTree` class is a generic class that expects the input data to be json, 
-either from a file or a http address. The json should have a list of dictionaries, each dictionary representing a complete filepath (e.g., `/etc/ssl`). The key "Name" is required
-in the dictionary to identify the file. If you want to create a subclass, you can
-define any additional parsing needed for your input under a function called `_load`.
-It should check that `self.data` is not None, and if not, expect it to be
-loaded json from the input. You can continue parsing it and save again the final
-result to `self.data`. See `ContainerDiffTree` for an example.
+The `ContainerTree` class is a subclass of `ContainerTreeBase` that expects
+to build a file system tree to describe one or more containers. The json input
+should have a list of dictionaries, each dictionary representing a complete 
+filepath (e.g., `/etc/ssl`). The key "Name" is required in the dictionary to 
+identify the file. This class might be suited for you if you have a custom
 
 
 ## ContainerDiffTree
@@ -59,15 +91,17 @@ structure under "Analysis". For example:
 
 We are only interested in the list under "Analysis."
 
-
 ## Examples
 
 ### Create a Tree
 
 These examples are also provided in the [examples](examples) folder.
+For this first example, we will be using the [Container API](https://singularityhub.github.io/api/) 
+served by the Singularity Hub robots to read in lists of files.
+
 
 ```python
-from containertree import ContainerDiffTree
+from containertree import ContainerFileTree
 import requests
 
 # Path to database of container-api 
@@ -75,8 +109,9 @@ database = "https://singularityhub.github.io/api/files"
 containers = requests.get(database).json()
 entry = containers[0]  
 
-# Google Container Diff Structure
-tree = ContainerDiffTree(entry['url'])
+# Google Container Diff Analysis Type "File" Structure
+# This takes about a minute (257,991 nodes)
+tree = ContainerFileTree(entry['url'])
 
 # To find a node based on path
 tree.find('/etc/ssl')
@@ -117,7 +152,7 @@ tag1=entry1['collection']
 #'54r4/sara-server-vre'
 tag2=entry2['collection']
 #'A33a/sjupyter'
-tree = ContainerDiffTree(entry1['url'], tag=tag1)
+tree = ContainerFileTree(entry1['url'], tag=tag1)
 
 # What are the tags for the root node?
 tree.root.tags
@@ -158,6 +193,8 @@ What would we do next? Would we want to know what files change between versions 
 
 ### Visualize a Tree
 These are under development! Here are some quick examples:
+
+![examples/heatmap/heatmap.png](examples/heatmap/heatmap.png)
 
 #### Hierarchy
 

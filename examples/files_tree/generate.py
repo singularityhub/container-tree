@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from containertree import ContainerDiffTree
+from containertree import ContainerFileTree
 from random import choice
 import requests
 import tempfile
@@ -29,7 +29,7 @@ container2 = containers[1]
 
 # Google Container Diff Structure
 print('Generating files tree!')
-tree = ContainerDiffTree(container1['url'])
+tree = ContainerFileTree(container1['url'])
 tree.update(container2['url'])
 
 print(tree)
