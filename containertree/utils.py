@@ -61,21 +61,29 @@ def get_tmpfile(prefix=""):
     return tmp_file
 
 
-def run_container_diff(container_name, output_file=None):
+def run_container_diff(container_name, output_file=None, types=None):
     '''Run container-diff to extract the diff data structure with
-       packages (Pip and Apt) and History
+       packages (Pip and Apt) and History and Files
     '''
     layers = dict()
 
+    if types == None:
+        types = ['pip', 'apt', 'history', 'file']
+
+    types = ["--type=%s" % t for t in types]
+
     if output_file == None:
         output_file = get_tmpfile(prefix="container-diff")
-    response = run_command(["container-diff", "analyze", container_name,
-                            "--type=pip", "--type=apt", "--type=history",
-                            "--output", output_file, "--json",
-                            "--quiet","--verbosity=panic"])
+
+    cmd = ["container-diff", "analyze", container_name]
+    response = run_command(cmd + types + ["--output", output_file, "--json",
+                                          "--quiet","--verbosity=panic"])
+
     if response['return_code'] == 0 and os.path.exists(output_file):
         layers = read_json(output_file)
         os.remove(output_file)
+    else:
+        print(response['message'])
 
     return layers
 
@@ -120,15 +128,14 @@ def check_install(software='container-diff', quiet=True):
        software: the software to check if installed
        quiet: should we be quiet? (default True)
     '''
-    cmd = [software, '--version']
+    cmd = ['which', software]
     try:
-        version = run_command(cmd, software)
+        found = run_command(cmd)
     except: # FileNotFoundError
         return False
 
-    if version is not None:
-        if quiet is False and version['return_code'] == 0:
-            version = version['message']
-            print("Found %s version %s" % (software, version))
+    if found['return_code'] == 0:
+        if quiet is False:
+            print(found['message'])
         return True
     return False

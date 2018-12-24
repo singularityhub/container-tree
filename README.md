@@ -99,7 +99,6 @@ These examples are also provided in the [examples](examples) folder.
 For this first example, we will be using the [Container API](https://singularityhub.github.io/api/) 
 served by the Singularity Hub robots to read in lists of files.
 
-
 ```python
 from containertree import ContainerFileTree
 import requests
@@ -110,7 +109,6 @@ containers = requests.get(database).json()
 entry = containers[0]  
 
 # Google Container Diff Analysis Type "File" Structure
-# This takes about a minute (257,991 nodes)
 tree = ContainerFileTree(entry['url'])
 
 # To find a node based on path
@@ -136,6 +134,19 @@ tree.get_count('/etc/tomato')
 # Update the tree with a second container!
 new_entry = containers[1]  
 tree.update(new_entry['url'])
+```
+
+### Add a URI
+
+Let's say that we don't have a list of files, either local or via http. If
+we have [container-diff](https://github.com/GoogleContainerTools/container-diff) installed, 
+we can add containers to the tree based on unique resource identifier (URI).
+
+```python
+from containertree import ContainerFileTree
+
+# Google Container Diff Analysis Type "File" Structure
+tree = ContainerFileTree("vsoch/salad")
 ```
 
 ### Add Containers
