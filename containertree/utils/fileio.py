@@ -27,6 +27,23 @@ def get_installdir():
     return os.path.abspath(os.path.dirname(__file__))
 
 
+def recursive_find(base, pattern=None):
+    '''recursively find files that match a pattern, in this case, we will use
+       to find Dockerfiles
+
+       Paramters
+       =========
+       base: the root directory to start the seartch
+       pattern: the pattern to search for using fnmatch
+    '''
+    if pattern is None:
+        pattern = "*"
+
+    for root, dirnames, filenames in os.walk(base):
+        for filename in fnmatch.filter(filenames, pattern):
+            yield os.path.join(root, filename)
+
+
 def read_json(filename, mode='r'):
     '''read_json reads in a json file and returns
        the data structure as dict.

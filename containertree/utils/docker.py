@@ -25,7 +25,7 @@ import requests
 import shutil
 import sys
 import tempfile
-from .fileio import get, call
+from .https import get, call
 
 ###############################################################################
 
@@ -56,7 +56,7 @@ class DockerInspector(object):
 
         self._base = "https://%s" % base
         self._version = version
-        self.base = "%s/%s" %(base.strip('/'), version)
+        self.base = "%s/%s" %(self._base.strip('/'), version)
     
     def update_token(self, response):
         '''update_token uses HTTP basic authentication to get a token for
@@ -128,7 +128,6 @@ class DockerInspector(object):
                     self.manifests['config'] = self._get(url, headers=headers)
     
                 self.manifests[schemaVersion] = manifest
-
 
         return self.manifests
 

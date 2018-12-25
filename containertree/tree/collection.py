@@ -33,40 +33,33 @@ class CollectionTree(ContainerTreeBase):
        the containers from container-diff.
 
     '''
-    def __init__(self, inputs=None, tag=None):
-        super(CollectionTree, self).__init__(inputs, tag=tag)
+    def __init__(self):
+        super(CollectionTree, self).__init__()
 
         # Update the root to be for scratch
-        self.root = Node('', {'size': 0, 'Name': 'scratch'}, tag=None)
-
+        self.root = Node('scratch', {'size': 0, 'Name': 'scratch'}, tag=None)
+        self.orphans = {}
 
     def __str__(self):
         return "CollectionTree<%s>" % self.count
     def __repr__(self):
         return "CollectionTree<%s>" % self.count
 
+    def _load(self, uri, fromuri):
+        '''when we start here, we've been passed a Dockerfile.
+        '''
 
-    def _load(self, data=None):
-        '''when we start here, we've been passed either a container-diff
-           data structure, or a loaded container URI, or a Dockerfile.'''
-
-        # Case 1. if we loaded a container-diff uri, it will be a list, get uri
-        self.data = "scratch"
-
-        if isinstance(data, list):
-            self.data = data[0]['Image']
-
-        # Case 2: Data is actually a Dockerfile that needs to be parsed
-        elif "Dockerfile" in data:
-            if os.path.exists(data):
-                froms = self._load_dockerfile(data, action="FROM")
+        # Case 1. if we loaded a container-diff uri, it will be a uri
+        if "Dockerfile" in fromuri:        
+            if os.path.exists(fromuri):
+                froms = self._load_dockerfile(fromuri, action="FROM")
 
                 # If we find the FROM, we want to extract history to get all from
                 # In future, could support more than one from here
                 if len(froms) > 0:
-                    self.data = self.data[0]
+                    fromuri = froms[0]
 
-        # When we get down here, we have either self.data as scratch, or a uri
+        return {"Image": uri, "From": fromuri}
 
 
     def _load_dockerfile(self, dockerfile, action=None):
@@ -84,7 +77,7 @@ class CollectionTree(ContainerTreeBase):
                     lines.append(line)
         return lines
 
-    def _make_tree(self, data=None, tag=None):
+    def _make_tree(self, uri, fromuri, tag=None):
         '''construct the tree from the loaded data (self.data) which for
            this collection tree is a URI for a Docker image. Since we are making
            the tree starting with a single container and building based on
@@ -92,65 +85,56 @@ class CollectionTree(ContainerTreeBase):
            and they are tagged with container tags.
         '''
 
-        # The URI of a docker container to start parsing
-        if data is None:
-            data = self.data
+        # Find the node in the tree, if it exists
+        nodeImage = self.find(uri)
+        nodeFrom = self.find(fromuri)                
 
-        # Load the URI into the docker inspector
-        inspect = DockerInspector(data)
+        # Case 1: both exist, do nothing.
+        if nodeImage != None and nodeFrom != None:
+            return
 
-        for attrs in data:
+        # Case 2: Parent is in tree, but not child
+        elif nodeImage == None and nodeFrom != None:
+            nodeImage = Node(uri, {"Name": uri })
+            nodeImage.leaf = True
+            nodeFrom.children.append(nodeImage)
 
-            # The starting node is the root node
-            node = self.root
+        # Case 3: Child is in tree, but not parent
+        elif nodeImage != None and nodeFrom == None:
+            nodeFrom = Node(fromuri, {"Name": fromuri })
+            # Remove the nodeImage
+            nodeImage = self.remove(uri)
+            # Add as child to new parent
+            nodeFrom.children.append(nodeImage)
+            self.root.children.append(nodeFrom)
 
-            filepaths = attrs['Name'].split(self.folder_sep)
-        
-            # Add the path to the correct spot in the tree    
-            for filepath in filepaths:
+        # Case 4: Both aren't in tree
+        if nodeImage == None and nodeFrom == None:
+            nodeFrom = Node(fromuri, {"Name": fromuri })
+            nodeImage = Node(uri, {"Name": uri })
+            nodeImage.leaf = True
+            nodeFrom.children = [nodeImage]
+            self.root.children.append(nodeFrom)
 
-                if not filepath:
-                    continue
-
-                found = False
-
-                # We are at the root
-                if filepath == node.label:
-                    found = True             
-                    
-                else:
-
-                    # Search in present node
-                    for child in node.children:
-
-                        # We found the parent
-                        if child.label == filepath:
-
-                            # Keep track of how many we have
-                            child.counter += 1
-
-                            # update node to be child that was found
-                            node = child
-                            found = True
-                            break
+        if tag is not None:
+            if tag not in nodeImage.tags:
+                nodeImage.tags.add(tag)
 
 
-                # If not found, add new node (child)
-                if not found:
-                    new_node = Node(filepath, attrs)
-                    self.count +=1
+    def update(self, uri, fromuri, tag=None):
+        '''update will load in new data (without distributing an old self.data)
+        '''
 
-                    # Add to the root (or the last where found)
-                    node.children.append(new_node)
+        # Loads {"Image": ... "From": ...}
+        data = self._load(uri, fromuri)
 
-                    # Keep working down the tree
-                    node = new_node
+        # If we have loaded data, continue
+        if data:
+            self._make_tree(data['Image'], data['From'], tag=tag)
 
 
-                # Add the tag to the new (or existing) node
-                if tag is not None:
-                    if tag not in node.tags:
-                        node.tags.add(tag)
-
-            # The last in the list is the leaf (file)
-            node.leaf = True
+    def load(self, uri, fromuri, tag=None):
+        ''' uri must be the uri for a container. fromuri can be a uri OR
+            a Dockerfile for the uri given (to extract from)
+        '''
+        self.update(uri, fromuri, tag)

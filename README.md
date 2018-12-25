@@ -197,12 +197,38 @@ to traverse the tree and compare the entities defined at the different nodes!
 
 We've recently added a new kind of tree, the collection tree! With a collection 
 tree, each node is a container, and we build the tree based on FROM statements
-in Dockerfiles (the bases).
+in Dockerfiles (the bases). Since the image manifets don't give hints about FROM,
+we must build this from Dockerfiles, OR from a URI and it's from URI (meaning
+we can collect pairs of parents and children).
 
 ```python
 from containertree import CollectionTree
+
+# Initialize a collection tree
+tree = CollectionTree()
+tree.update('singularityhub/containertree', 'continuumio/miniconda3')
+
+# tree.root.children
+# Out[6]: [Node<continuumio/miniconda3>]
+
+tree.update('singularityhub/sregistry-cli', 'continuumio/miniconda3')
+
+tree.find('continuumio/miniconda3').children
+# Out[5]: [Node<singularityhub/containertree>, Node<singularityhub/sregistry-cli>]
 ```
-**under development**
+
+We can also do this from a Dockerfile
+
+```
+# The parent is the same continuumio/miniconda3
+tree.update('vanessa/salad', "Dockerfile")
+
+tree.find('continuumio/miniconda3').children
+[Node<singularityhub/containertree>,
+ Node<singularityhub/sregistry-cli>,
+ Node<vanessa/salad>]
+```
+
 
 ### Container Comparisons
 

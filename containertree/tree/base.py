@@ -359,26 +359,9 @@ class ContainerTreeBase(object):
         return result
 
 
-    def trace(self, name):
+    def trace(self, name, node=None):
         '''trace a path in the tree, return all nodes up to it.
         '''
-        return self.find(name, trace=True)
-
-
-    def get_count(self, name):
-        '''find a path in the tree and return the node if found
-        '''
-        counter = 0
-        node = self.find(name)
-        if node:
-            counter = node.counter
-        return counter
-
-    def find(self, name, trace=False, node=None):
-        '''find a path in the tree and return the node if found.
-           This base function is suited for searches that don't build
-           on themselves (e.g., not filepaths or words)
-         '''
 
         # if the user wants a trace, we return all paths up to it
         traces = []
@@ -393,17 +376,69 @@ class ContainerTreeBase(object):
         if len(node.children) == 0:
 
             # Return the node
-            if len(traces) > 0:
-                return traces[0]
-            return traces or None
-
-        # Look for the path in the tree
-        if name == node.label:
-            traces.append(node)
+            return traces
 
         for child in node.children:
-            traces += self.find(name, trace, child)
+            new_traces = self.trace(name, trace, child)
+            if new_traces != None:
+                traces += new_traces
         return traces
+
+
+    def get_count(self, name):
+        '''find a path in the tree and return the node if found
+        '''
+        counter = 0
+        node = self.find(name)
+        if node:
+            counter = node.counter
+        return counter
+
+
+    def find(self, name, node=None):
+        '''find a path in the tree and return the node if found.
+           This base function is suited for searches that don't build
+           on themselves (e.g., not filepaths or words)
+         '''
+
+        if node == None:
+            node = self.root
+
+        # Did we find a node?
+        if node.label == name:
+            return node
+
+        # No children, we finished search
+        if len(node.children) == 0:
+            return None
+
+        for child in node.children:
+            node = self.find(name, child)
+            if node != None:
+                return node
+
+
+    def remove(self, name, node=None):
+        '''find a path in the tree and remove (and return) the node if found.
+           The function returns None if the Node wasn't in the tree (and wasn't
+           found and removed).
+         '''
+
+        if node == None:
+            node = self.root
+
+        # Did we find the node?
+        if node.label == name:
+            removed = node.copy()
+            del node
+            return removed
+
+        # No children, we finished search
+        if len(node.children) > 0:
+            for child in node.children:
+                removed = self.remove(name, child)
+                if remove != None:
+                    return removed
 
 
     def search(self, name, number=None, node=None):
