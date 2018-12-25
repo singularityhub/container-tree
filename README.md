@@ -93,7 +93,7 @@ We are only interested in the list under "Analysis."
 
 ## Examples
 
-### Create a Tree
+### Create a Container Tree
 
 These examples are also provided in the [examples](examples) folder.
 For this first example, we will be using the [Container API](https://singularityhub.github.io/api/) 
@@ -193,7 +193,18 @@ tree.update(entry2['url'], tag=tag2)
 You can imagine having a tagged Trie will be very useful for different algorithms
 to traverse the tree and compare the entities defined at the different nodes!
 
-### Comparisons
+### Create a Collection Tree
+
+We've recently added a new kind of tree, the collection tree! With a collection 
+tree, each node is a container, and we build the tree based on FROM statements
+in Dockerfiles (the bases).
+
+```python
+from containertree import CollectionTree
+```
+**under development**
+
+### Container Comparisons
 
 Once we have added a second tree, we can traverse the trie to calculate comparisons!
 The score represents the percentage of nodes defined in one or more containers (call

@@ -61,33 +61,6 @@ def get_tmpfile(prefix=""):
     return tmp_file
 
 
-def run_container_diff(container_name, output_file=None, types=None):
-    '''Run container-diff to extract the diff data structure with
-       packages (Pip and Apt) and History and Files
-    '''
-    layers = dict()
-
-    if types == None:
-        types = ['pip', 'apt', 'history', 'file']
-
-    types = ["--type=%s" % t for t in types]
-
-    if output_file == None:
-        output_file = get_tmpfile(prefix="container-diff")
-
-    cmd = ["container-diff", "analyze", container_name]
-    response = run_command(cmd + types + ["--output", output_file, "--json",
-                                          "--quiet","--verbosity=panic"])
-
-    if response['return_code'] == 0 and os.path.exists(output_file):
-        layers = read_json(output_file)
-        os.remove(output_file)
-    else:
-        print(response['message'])
-
-    return layers
-
-
 def run_command(cmd, sudo=False):
     '''run_command uses subprocess to send a command to the terminal.
 

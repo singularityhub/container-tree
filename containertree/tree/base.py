@@ -18,7 +18,9 @@ import os
 from random import choice
 from containertree.utils import ( 
     check_install, 
-    run_container_diff 
+    run_command,
+    read_json,
+    get_tmpfile
 )
 import requests
 import json
@@ -108,15 +110,53 @@ class ContainerTreeBase(object):
         return finished
 
 
-    def update(self, inputs, tag=None):
-        '''update will load in new data (without distributing an old self.data)
+    def _load_container_diff(self, container_name, output_file=None, types=None):
+        '''call container-diff directly on the command line to extract
+           the layers of interest.
+        '''
+        layers = dict()
+
+        # Stop short if we don't have container-diff
+        if not check_install(quiet=True):
+            print('container-diff executable not found, cannot extract %s' % inputs)
+            return layers
+
+        if types == None:
+            types = ['pip', 'apt', 'history', 'file']
+
+        # Common error to provide just a string type
+        if not isinstance(types, list):
+            types = [types]
+
+        types = ["--type=%s" % t for t in types]
+
+        if output_file == None:
+            output_file = get_tmpfile(prefix="container-diff")
+
+        cmd = ["container-diff", "analyze", container_name]
+        response = run_command(cmd + types + ["--output", output_file, "--json",
+                                              "--quiet","--verbosity=panic"])
+
+        if response['return_code'] == 0 and os.path.exists(output_file):
+            layers = read_json(output_file)
+            os.remove(output_file)
+        else:
+            print(response['message'])
+
+        return layers
+
+
+    def _update(self, inputs, tag=None):
+        '''_update is a helper function for update and load. We return
+           data based on the inputs provided, and return loaded to the
+           calling function. The subsequent action is up to the calling
+           function.
 
            Parameters
            ==========
            inputs: the list of files (json/url export from ContainerDiff,
                      OR the uri of a container (to run container-diff).
            tag: if defined, a tag or label to identify
-
         '''
         data = None
 
@@ -128,13 +168,30 @@ class ContainerTreeBase(object):
         elif os.path.exists(inputs):
             if inputs.endswith('json'):
                 data = self._load_file(inputs)
+            # Otherwise, pass on the filepath to the _load function
+            else:
+                print('Unrecognized extension, passing %s to _load subclass' % inputs) 
+                data = inputs
 
         # Last effort is to run container-diff
+        elif check_install(quiet=True):
+            data = self._load_container_diff(inputs)
         else:
-            if check_install(quiet=True):
-                data = run_container_diff(inputs)
-
             print('Error loading %s' %inputs)
+
+        return data
+
+
+    def update(self, inputs, tag=None):
+        '''update will load in new data (without distributing an old self.data)
+
+           Parameters
+           ==========
+           inputs: the list of files (json/url export from ContainerDiff,
+                     OR the uri of a container (to run container-diff).
+           tag: if defined, a tag or label to identify
+        '''
+        data = self._update(inputs)
 
         # If we have loaded data, continue
         if data:
@@ -154,29 +211,9 @@ class ContainerTreeBase(object):
             with "Name" corresponding to the full path.
 
         '''
-
-        # The user can also provide a list of dict (files)
-        if isinstance(inputs, list):
-            self.data = self._load_list(inputs)
-
-        # Load data from web / url
-        elif inputs.startswith('http'):
-            self.data = self._load_http(inputs)
-
-        # Load data from file
-        elif os.path.exists(inputs):
-            if inputs.endswith('json'):
-                self.data = self._load_file(inputs)
-
-        # Last effort is to run container-diff
-        else:
-            if check_install(quiet=True):
-                self.data = run_container_diff(inputs)
-            else:
-                print('container-diff is not installed.')
-                print('Error loading %s' %inputs)
-
-        if self.data:
+        data = self._update(inputs)
+        if data != None:
+            self.data = data
             self.data = self._load()
 
 

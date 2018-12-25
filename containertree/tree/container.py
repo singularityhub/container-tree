@@ -17,10 +17,7 @@
 
 import os
 from random import choice
-from containertree.utils import ( 
-    check_install, 
-    run_container_diff 
-)
+from containertree.utils import check_install
 import requests
 import json
 
@@ -169,9 +166,9 @@ class ContainerDiffTree(ContainerTree):
 
     '''
     def _load(self, data=None):
-        return self._load_container_diff(data, analyze_type="File")
+        return self._filter_container_diff(data, analyze_type="File")
 
-    def _load_container_diff(self, data=None, analyze_type="File"):
+    def _filter_container_diff(self, data=None, analyze_type="File"):
         ''' class instantiated by subclass to do custom parsing of loaded data.
             In the case of Google container diff, whether from local file
             or web http, we find the "File" Analysis type and return it.
@@ -212,7 +209,7 @@ class ContainerFileTree(ContainerDiffTree):
        Container Diff File export.
     '''
     def _load(self, data=None):
-        return self._load_container_diff(data, analyze_type="File")
+        return self._filter_container_diff(data, analyze_type="File")
 
 
 class ContainerAptTree(ContainerDiffTree):
@@ -220,7 +217,7 @@ class ContainerAptTree(ContainerDiffTree):
        packages.
     '''
     def _load(self, data=None):
-        return self._load_container_diff(data, analyze_type="Apt")
+        return self._filter_container_diff(data, analyze_type="Apt")
 
 
 class ContainerPipTree(ContainerDiffTree):
@@ -228,7 +225,7 @@ class ContainerPipTree(ContainerDiffTree):
        packages.
     '''
     def _load(self, data=None):
-        return self._load_container_diff(data, analyze_type="Pip")
+        return self._filter_container_diff(data, analyze_type="Pip")
 
 
 class ContainerPackageTree(ContainerDiffTree):
@@ -236,7 +233,7 @@ class ContainerPackageTree(ContainerDiffTree):
        packages.
     '''
     def _load(self, data=None):
-        pip_list = self._load_container_diff(data, analyze_type="Pip") or []
-        apt_list = self._load_container_diff(data, analyze_type="Pip") or []
+        pip_list = self._filter_container_diff(data, analyze_type="Pip") or []
+        apt_list = self._filter_container_diff(data, analyze_type="Pip") or []
         #TODO: inspect, can we do this?
         return pip_list + apt_list
