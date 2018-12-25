@@ -229,6 +229,30 @@ tree.find('continuumio/miniconda3').children
  Node<vanessa/salad>]
 ```
 
+Now let's say we add the actual parent of continuumio/miniconda3 (it's not scratch),
+but let's pretend it's the library/python base image.
+
+```python
+tree.update('continuumio/miniconda3', 'library/python')
+```
+
+The new child is the parent node:
+
+```python
+tree.root.children
+Out[4]: [Node<library/python>]
+```
+
+and it's inherited the previous children.
+
+```python
+tree.root.children[0].children[0].children
+Out[9]: 
+[Node<singularityhub/containertree>,
+ Node<singularityhub/sregistry-cli>,
+ Node<vanessa/salad>]
+```
+
 
 ### Container Comparisons
 

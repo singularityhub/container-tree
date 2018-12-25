@@ -24,7 +24,7 @@ from containertree.utils import (
 )
 import requests
 import json
-
+import copy
 
 class ContainerTreeBase(object):
 
@@ -379,9 +379,7 @@ class ContainerTreeBase(object):
             return traces
 
         for child in node.children:
-            new_traces = self.trace(name, trace, child)
-            if new_traces != None:
-                traces += new_traces
+            traces += self.trace(name, child)            
         return traces
 
 
@@ -421,7 +419,8 @@ class ContainerTreeBase(object):
     def remove(self, name, node=None):
         '''find a path in the tree and remove (and return) the node if found.
            The function returns None if the Node wasn't in the tree (and wasn't
-           found and removed).
+           found and removed). The way this is designed, we cannot remove the
+           root node (but we just return it).
          '''
 
         if node == None:
@@ -429,16 +428,16 @@ class ContainerTreeBase(object):
 
         # Did we find the node?
         if node.label == name:
-            removed = node.copy()
-            del node
-            return removed
+            return node
 
         # No children, we finished search
         if len(node.children) > 0:
-            for child in node.children:
-                removed = self.remove(name, child)
-                if remove != None:
-                    return removed
+            for c in range(len(node.children)):
+                child = node.children[c]
+                to_remove = self.remove(name, child)
+                if to_remove != None:
+                    del node.children[c]
+                    return to_remove
 
 
     def search(self, name, number=None, node=None):
