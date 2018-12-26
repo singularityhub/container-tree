@@ -274,10 +274,11 @@ class ContainerTreeBase(object):
             if current is None:
                 current = self.root
 
+            tags = list(current.tags)
             new_node = {'color': choice(colors),
                         'key': current.label,
                         'name': current.label.split('/')[-1],
-                        'tags': current.tags,
+                        'tags': tags,
                         'attrs': current.get_attributes(),
                         'children': [] }
 
@@ -527,7 +528,12 @@ class Node(object):
 
     def get_attributes(self):
         '''return all attributes of the node (aside from children)'''
-        ats = {key:val for key,val in self.__dict__.items() if key!="children"}
+        ats = {} 
+        for key, val in self.__dict__.items():
+            if key !="children":
+                if isinstance(val, set):
+                    val = list(val)
+                ats[key] = val
         return ats
 
 

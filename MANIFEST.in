@@ -1,5 +1,6 @@
 include README.md LICENSE
 recursive-include containertree *
+recursive-include containertree *.html
 global-exclude *.py[co]
 global-exclude *.img
 global-exclude *.simg

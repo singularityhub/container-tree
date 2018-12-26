@@ -24,7 +24,7 @@ import os
 import tempfile
 
 def get_installdir():
-    return os.path.abspath(os.path.dirname(__file__))
+    return os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 def recursive_find(base, pattern=None):

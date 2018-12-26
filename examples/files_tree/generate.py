@@ -33,7 +33,7 @@ tree = ContainerFileTree(container1['url'])
 tree.update(container2['url'])
 
 print(tree)
-# ContainerTree<38008>
+# ContainerTree<56386>
 
 # Create temporary directory and copy file there
 from containertree.utils import get_template
