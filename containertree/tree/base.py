@@ -368,9 +368,12 @@ class ContainerTreeBase(object):
         if node == None:
             node = self.root
 
-        # Did we find a node?
+        # Always add the current node
+        traces.append(node)
+
+        # Did we find the node?
         if node.label == name:
-            traces.append(node)
+            return traces
 
         # No children, we finished search
         if len(node.children) == 0:

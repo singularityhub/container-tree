@@ -274,6 +274,7 @@ scores = tree.similarity_score(tags)
 # 'tags': ['54r4/sara-server-vre', 'A33a/sjupyter'],
 # 'total': 56386}
 ```
+
 You can then use this to generate a heatmap / matrix of similarity scores, or anything
 else you desire! For example, [here is the heatmap](https://singularityhub.github.io/container-tree/examples/heatmap/demo/) that I made.
 
