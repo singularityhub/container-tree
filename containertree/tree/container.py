@@ -50,6 +50,11 @@ class ContainerTree(ContainerTreeBase):
             # The starting node is the root node
             node = self.root
 
+            # Add the tag to the new (or existing) node
+            if tag is not None:
+                if tag not in node.tags:
+                    node.tags.add(tag)
+
             filepaths = attrs['Name'].split(self.folder_sep)
         
             # Add the path to the correct spot in the tree    
@@ -91,7 +96,6 @@ class ContainerTree(ContainerTreeBase):
 
                     # Keep working down the tree
                     node = new_node
-
 
                 # Add the tag to the new (or existing) node
                 if tag is not None:

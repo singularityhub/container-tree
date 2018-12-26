@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (C) 2018 Vanessa Sochat.
 #
@@ -15,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from containertree import ContainerDiffTree
+from containertree import ContainerFileTree
 from random import choice
 import requests
 import tempfile
@@ -29,7 +28,7 @@ container1 = containers[0]
 container2 = containers[1]
 
 # Google Container Diff Structure
-tree = ContainerDiffTree(container1['url'],
+tree = ContainerFileTree(container1['url'],
                          tag=container1['collection'])
 
 # Add the second container to the tree
@@ -52,7 +51,7 @@ scores = tree.similarity_score(tags)
 # Let's build from scratch
 
 print('Generating comparison tree!')
-tree = ContainerDiffTree(containers[0]['url'],
+tree = ContainerFileTree(containers[0]['url'],
                          tag=containers[0]['collection'])
 
 names = []
