@@ -14,17 +14,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from .https import ( get, call )
+from .fileio import (
+    get_installdir,
+    read_json,
+    get_template,
+    get_tmpfile,
+    recursive_find,
+    run_command,
+    check_install    
+)
 
-import os
-
-def get_installdir():
-    return os.path.abspath(os.path.dirname(__file__))
-
-def get_template(name):
-    '''return an html template based on name.
-    '''
-    here = get_installdir()
-    template_folder = os.path.join(here, 'templates')
-    template_file = "%s/%s.html" %(template_folder, name)
-    if os.path.exists(template_file):
-        return template_file
+from .docker import DockerInspector

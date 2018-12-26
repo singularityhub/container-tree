@@ -18,7 +18,7 @@
 # This scrips will produce a massive summary tree (and save to file, if 
 # argument is provided
 
-from containertree import ContainerDiffTree
+from containertree import ContainerFileTree
 from random import choice
 import requests
 import tempfile
@@ -30,7 +30,7 @@ print('Selecting container from %s...' %database)
 containers = requests.get(database).json()
 
 print('Generating comparison tree!')
-tree = ContainerDiffTree(containers[0]['url'],
+tree = ContainerFileTree(containers[0]['url'],
                          tag=containers[0]['collection'])
 
 names = []

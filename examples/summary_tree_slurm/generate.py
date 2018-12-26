@@ -21,7 +21,7 @@
 # before we ran this script, we installed containertree
 # pip install --user containertree
 
-from containertree import ContainerDiffTree
+from containertree import ContainerFileTree
 from random import choice
 import requests
 import sys
@@ -32,7 +32,7 @@ print('Selecting container from %s...' %database)
 containers = requests.get(database).json()
 
 print('Generating comparison tree!')
-tree = ContainerDiffTree(containers[0]['url'],
+tree = ContainerFileTree(containers[0]['url'],
                          tag=containers[0]['collection'])
 
 names = []

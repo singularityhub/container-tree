@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (C) 2018 Vanessa Sochat.
 #
@@ -17,19 +16,26 @@
 
 import os
 from random import choice
+from containertree.utils import ( 
+    check_install, 
+    run_command,
+    read_json,
+    get_tmpfile
+)
 import requests
 import json
+import copy
 
-class ContainerTree(object):
+class ContainerTreeBase(object):
 
-    def __init__(self, filelist, folder_sep='/', tag=None):
-        '''construct a container tree from a container-diff
-           export of flies. See "load" for the logic to construct
-           the tree.
+    def __init__(self, inputs=None, folder_sep='/', tag=None):
+        '''construct a container tree from some export of files or 
+           a string to indicate a container. This is determined by
+           the subclass.
 
            Parameters
            ==========
-           filelist: the json export (files.json) of a tar, can be https
+           list: the json export (files.json) of a tar, can be https
            folder_sep: the character that separates path names
            tag: if defined, ascribe a unique id to the list at each node
                 to identify the container. We can add other containers to
@@ -48,12 +54,12 @@ class ContainerTree(object):
         self.count = 1
         
         # Sets self.data and builds self.tree
-        self.load(filelist)
+        if inputs != None:
+            self.load(inputs)
 
         # If data is loaded, make the tree
         if self.data:
             self._make_tree(tag=tag)
-
 
 # Loading Functions
     
@@ -71,22 +77,22 @@ class ContainerTree(object):
                 sys.exit(1)
 
 
-    def _load_json(self, filelist):
-        '''read the filelist from a json file
+    def _load_json(self, inputs):
+        '''read the inputs from a json file
         '''
 
         # Read in the raw data file
-        with open(filelist) as filey:
+        with open(inputs) as filey:
             data = json.load(filey)
         return data
 
 
-    def _load_list(self, filelist):
-        '''load a filelist. If the files are found to exist and Size is not
+    def _load_list(self, inputs):
+        '''load a inputs. If the files are found to exist and Size is not
            included, calculate it.
         '''
         finished = []
-        for entry in filelist:
+        for entry in inputs:
 
             # If it's a filepath, convert to dictionary
             if not isinstance(entry, dict):
@@ -104,36 +110,96 @@ class ContainerTree(object):
         return finished
 
 
-    def update(self, filelist, tag=None):
-        '''update will load in new data (without distributing an old self.data)
+    def _load_container_diff(self, container_name, output_file=None, types=None):
+        '''call container-diff directly on the command line to extract
+           the layers of interest.
+        '''
+        layers = dict()
+
+        # Stop short if we don't have container-diff
+        if not check_install(quiet=True):
+            print('container-diff executable not found, cannot extract %s' % inputs)
+            return layers
+
+        if types == None:
+            types = ['pip', 'apt', 'history', 'file']
+
+        # Common error to provide just a string type
+        if not isinstance(types, list):
+            types = [types]
+
+        types = ["--type=%s" % t for t in types]
+
+        if output_file == None:
+            output_file = get_tmpfile(prefix="container-diff")
+
+        cmd = ["container-diff", "analyze", container_name]
+        response = run_command(cmd + types + ["--output", output_file, "--json",
+                                              "--quiet","--verbosity=panic"])
+
+        if response['return_code'] == 0 and os.path.exists(output_file):
+            layers = read_json(output_file)
+            os.remove(output_file)
+        else:
+            print(response['message'])
+
+        return layers
+
+
+    def _update(self, inputs, tag=None):
+        '''_update is a helper function for update and load. We return
+           data based on the inputs provided, and return loaded to the
+           calling function. The subsequent action is up to the calling
+           function.
 
            Parameters
            ==========
-           filelist: the list of files (json/url export from ContainerDiff
+           inputs: the list of files (json/url export from ContainerDiff,
+                     OR the uri of a container (to run container-diff).
            tag: if defined, a tag or label to identify
-
         '''
         data = None
 
         # Load data from web / url
-        if filelist.startswith('http'):
-            data = self._load_http(filelist)
+        if inputs.startswith('http'):
+            data = self._load_http(inputs)
 
         # Load data from file
-        elif os.path.exists(filelist):
-            if filelist.endswith('json'):
-                data = self._load_file(filelist)
+        elif os.path.exists(inputs):
+            if inputs.endswith('json'):
+                data = self._load_file(inputs)
+            # Otherwise, pass on the filepath to the _load function
+            else:
+                print('Unrecognized extension, passing %s to _load subclass' % inputs) 
+                data = inputs
+
+        # Last effort is to run container-diff
+        elif check_install(quiet=True):
+            data = self._load_container_diff(inputs)
+        else:
+            print('Error loading %s' %inputs)
+
+        return data
+
+
+    def update(self, inputs, tag=None):
+        '''update will load in new data (without distributing an old self.data)
+
+           Parameters
+           ==========
+           inputs: the list of files (json/url export from ContainerDiff,
+                     OR the uri of a container (to run container-diff).
+           tag: if defined, a tag or label to identify
+        '''
+        data = self._update(inputs)
 
         # If we have loaded data, continue
-        else:
-            print('Error loading %s' %filelist)
-
         if data:
             data = self._load(data)
             self._make_tree(data=data, tag=tag)
 
 
-    def load(self, filelist):
+    def load(self, inputs):
         ''' Load a set of files from json into the container tree.
             This means:
  
@@ -145,25 +211,9 @@ class ContainerTree(object):
             with "Name" corresponding to the full path.
 
         '''
-
-        # The user can also provide a list of dict (files)
-        if isinstance(filelist, list):
-            self.data = self._load_list(filelist)
-
-        # Load data from web / url
-        elif filelist.startswith('http'):
-            self.data = self._load_http(filelist)
-
-        # Load data from file
-        elif os.path.exists(filelist):
-            if filelist.endswith('json'):
-                self.data = self._load_file(filelist)
-
-        # If we have loaded data, continue
-        else:
-            print('Error loading %s' %filelist)
-
-        if self.data:
+        data = self._update(inputs)
+        if data != None:
+            self.data = data
             self.data = self._load()
 
 
@@ -175,83 +225,26 @@ class ContainerTree(object):
 
 
     def __str__(self):
-        return "ContainerTree<%s>" % self.count
+        return "ContainerTreeBase<%s>" % self.count
     def __repr__(self):
-        return "ContainerTree<%s>" % self.count
+        return "ContainerTreeBase<%s>" % self.count
 
 
-    def insert(self, filepath, attrs=None, tag=None):
+    def insert(self, name, attrs=None, tag=None):
         '''insert a node into the tree.
         '''
-        entry = { 'Name': filepath }
+        entry = { 'Name': name }
+        
         if attrs is not None:
             for key,val in attrs.items():
                 entry[key] = val
 
         self._make_tree(data=[entry], tag=tag)
-    
+
 
     def _make_tree(self, data=None, tag=None):
-        '''construct the tree from the loaded data (self.data)
-           we should already have a root defined.
-        '''
-
-        # If function is used for insert, called
-        if data is None:
-            data = self.data
-
-        for attrs in data:
-
-            # The starting node is the root node
-            node = self.root
-
-            filepaths = attrs['Name'].split(self.folder_sep)
-        
-            # Add the path to the correct spot in the tree    
-            for filepath in filepaths:
-
-                found = False
-
-                # We are at the root
-                if filepath == node.filepath:
-                    found = True             
-                    
-                else:
-
-                    # Search in present node
-                    for child in node.children:
-
-                        # We found the parent
-                        if child.filepath == filepath:
-
-                            # Keep track of how many we have
-                            child.counter += 1
-
-                            # update node to be child that was found
-                            node = child
-                            found = True
-                            break
-
-
-                # If not found, add new node (child)
-                if not found:
-                    new_node = Node(filepath, attrs)
-                    self.count +=1
-
-                    # Add to the root (or the last where found)
-                    node.children.append(new_node)
-
-                    # Keep working down the tree
-                    node = new_node
-
-
-                # Add the tag to the new (or existing) node
-                if tag is not None:
-                    if tag not in node.tags:
-                        node.tags.add(tag)
-
-            # The last in the list is the leaf (file)
-            node.leaf = True
+        '''must be instantiated by subclass.'''
+        print('_make_tree must be instantiated by the subclass.')
 
 
     def export_tree(self, filename=None):
@@ -281,10 +274,11 @@ class ContainerTree(object):
             if current is None:
                 current = self.root
 
+            tags = list(current.tags)
             new_node = {'color': choice(colors),
-                        'key': current.name,
-                        'name': current.name.split('/')[-1],
-                        'tags': current.tags,
+                        'key': current.label,
+                        'name': current.label.split('/')[-1],
+                        'tags': tags,
                         'attrs': current.get_attributes(),
                         'children': [] }
 
@@ -366,131 +360,138 @@ class ContainerTree(object):
         return result
 
 
-    def trace(self, filepath):
+    def trace(self, name, node=None):
         '''trace a path in the tree, return all nodes up to it.
         '''
-        return self.find(filepath, trace=True)
+
+        # if the user wants a trace, we return all paths up to it
+        traces = []
+        if node == None:
+            node = self.root
+
+        # Always add the current node
+        traces.append(node)
+
+        # Did we find the node?
+        if node.label == name:
+            return traces
+
+        # No children, we finished search
+        if len(node.children) == 0:
+
+            # Return the node
+            return traces
+
+        for child in node.children:
+            traces += self.trace(name, child)            
+        return traces
 
 
-    def get_count(self, filepath):
+    def get_count(self, name):
         '''find a path in the tree and return the node if found
         '''
         counter = 0
-        node = self.find(filepath)
+        node = self.find(name)
         if node:
             counter = node.counter
         return counter
 
 
-    def find(self, filepath, trace=False):
-        '''find a path in the tree and return the node if found
-        '''
+    def find(self, name, node=None):
+        '''find a path in the tree and return the node if found.
+           This base function is suited for searches that don't build
+           on themselves (e.g., not filepaths or words)
+         '''
 
-        # if the user wants a trace, we return all paths up to it
-        traces = []
+        if node == None:
+            node = self.root
+
+        # Did we find a node?
+        if node.label == name:
+            return node
+
+        # No children, we finished search
+        if len(node.children) == 0:
+            return None
+
+        for child in node.children:
+            node = self.find(name, child)
+            if node != None:
+                return node
+
+
+    def remove(self, name, node=None):
+        '''find a path in the tree and remove (and return) the node if found.
+           The function returns None if the Node wasn't in the tree (and wasn't
+           found and removed). The way this is designed, we cannot remove the
+           root node (but we just return it).
+         '''
+
+        if node == None:
+            node = self.root
+
+        # Did we find the node?
+        if node.label == name:
+            return node
+
+        # No children, we finished search
+        if len(node.children) > 0:
+            for c in range(len(node.children)):
+                child = node.children[c]
+                to_remove = self.remove(name, child)
+                if to_remove != None:
+                    del node.children[c]
+                    return to_remove
+
+
+    def search(self, name, number=None, node=None):
+        '''find a basename in the tree. If number is defined, return
+           up to that number. 
+        '''
+        found = []
  
         # We always start at the root  
-        node = self.root
+        if node == None:
+            node = self.root
+
+        # Look for the name in the current node
+        if name in node.label:
+            found.append(node)
 
         # No children, no search
         if len(node.children) == 0:
+            return found
 
-            # They were looking for the root
-            if node.filepath == filepath:
-                return node
+        # Does the user want to cut out early?
+        if number != None:
+            if len(found) >= number:
+                return found
 
-            return
-        
-        filepaths = filepath.split(self.folder_sep)
-        assembled='/'.join(filepaths)
-
-        # Look for the path in the tree
-        for filepath in filepaths:
-
-            if filepath == node.filepath:
-
-                # if we have the complete assembled path, return node
-                if filepath == assembled:
-                    return node
-
-            else:
-
-                # Try and find the filepath in the tree
-                for child in node.children:
-                    if child.filepath == filepath:
-                        node = child
-
-                        # Does the user want to return a trace of all nodes?
-                        if trace is True:
-                            traces.append(node)
-
-                        # If the name is what we are looking for, return Node
-                        if node.name == assembled:
-                            if trace is True:
-                                return traces
-                            return node
-                        break
-
-
-# Visualization and Export
-
-
-
-class ContainerDiffTree(ContainerTree):
-    '''a container diff tree is a subclass of ContainerTree, specifically
-       ready to read in the result of a files export from Google's Container
-       Diff. We simply define the _load method to expect the format of:
-
-       [0]['Analysis'] --> [{"Name":"...", "Size": 123 }]
-
-    '''
-
-    def _load(self, data=None):
-        ''' class instantiated by subclass to do custom parsing of loaded data.
-            In the case of Google container diff, whether from local file
-            or web http, we need to index the list at 1 (only one in
-            list since a Singularity container is one tar file) and then
-            index the list of files at the "Analysis" key.
-        '''
-        if data is None:
-            data = self.data
-
-        if not data:
-            print('This function should be called with load() to define data.')
-            sys.exit(1)
-
-        # User can provide loaded data, as long as correct structure
-        if not isinstance(data, list):
-            print('Loaded Filelist must be list for Container Diff')
-        else:
-
-            # The user loaded files, but the result is empty
-            if len(data) == 0:
-                print('Loaded Filelist is empty')
-
-            # Data is stored at 0['Analysis']                
-            if "Analysis" not in data[0]:
-                print('Analysis key missing, is this ContainerDiff export?')
-            else:
-                return data[0]['Analysis'] 
+        # Not at current node, search children!
+        for child in node.children:
+            found += self.search(name, number, child)
+            if number != None:
+                if len(found) >= number:
+                    return found
+        return found            
 
 
 class Node(object):
     
-    def __init__(self, filepath, attrs, tag=None):
+    def __init__(self, name, attrs, tag=None):
         ''' a Node is a node in the Trie, meaning that
-            it stores a word (a folder or file) and some
+            it stores a word (a folder, name, or file) and some
             number of children from it. If a Node is a leaf 
             this coincides with the end of a path.
 
             Parameters
             ==========
-            filepath: the name of the folder or file
+            name: the name of the folder or file
             attrs: a dict of attributes to give to the node
             tag: a tag or label (goes into a list) to identify objects belonging
 
         '''
-        self.filepath = filepath
+        self.label = name
         self.children = []
         self.set_attributes(attrs)
         
@@ -506,9 +507,9 @@ class Node(object):
         self.counter = 1
 
     def __str__(self):
-        return "Node<%s>" % self.filepath
+        return "Node<%s>" % self.label
     def __repr__(self):
-        return "Node<%s>" % self.filepath
+        return "Node<%s>" % self.label
     
 
     def has(tag):
@@ -527,7 +528,12 @@ class Node(object):
 
     def get_attributes(self):
         '''return all attributes of the node (aside from children)'''
-        ats = {key:val for key,val in self.__dict__.items() if key!="children"}
+        ats = {} 
+        for key, val in self.__dict__.items():
+            if key !="children":
+                if isinstance(val, set):
+                    val = list(val)
+                ats[key] = val
         return ats
 
 

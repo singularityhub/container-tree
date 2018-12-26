@@ -1,1 +1,1 @@
-from .tree import ( ContainerTree, ContainerDiffTree )
+from .tree import ( ContainerTree, ContainerFileTree, CollectionTree )
