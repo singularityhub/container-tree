@@ -19,6 +19,5 @@ from .container import (
     ContainerTree, 
     ContainerFileTree,
     ContainerAptTree,
-    ContainerPipTree,
-    ContainerPackageTree
+    ContainerPipTree
 )

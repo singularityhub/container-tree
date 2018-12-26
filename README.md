@@ -227,6 +227,30 @@ tree.update(entry2['url'], tag=tag2)
 You can imagine having a tagged Trie will be very useful for different algorithms
 to traverse the tree and compare the entities defined at the different nodes!
 
+### Create a Container Package Tree
+
+You can also create trees to map different containers to packages maintained
+under Pip and Apt.
+
+```python
+from containertree.tree import ContainerAptTree
+
+# Initilize a tree with packages from a container
+apt = ContainerAptTree('singularityhub/sregistry-cli')
+
+apt.trace('wget')
+# [Node<>, Node<wget>, Node<1.18-5 deb9u2>]
+```
+```python
+from containertree.tree import ContainerPipTree
+
+# Initilize a tree with packages from a container
+pip = ContainerPipTree('neurovault/neurovault')
+
+pip.trace('nibabel')
+# [Node<>, Node<wget>, Node<1.18-5 deb9u2>]
+```
+
 ### Create a Collection Tree
 
 We've recently added a new kind of tree, the collection tree! With a collection 

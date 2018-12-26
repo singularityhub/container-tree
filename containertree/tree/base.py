@@ -212,7 +212,7 @@ class ContainerTreeBase(object):
 
         '''
         data = self._update(inputs)
-        if data != None:
+        if data not in [None, [], {}]:
             self.data = data
             self.data = self._load()
 
@@ -233,13 +233,48 @@ class ContainerTreeBase(object):
     def insert(self, name, attrs=None, tag=None):
         '''insert a node into the tree.
         '''
-        entry = { 'Name': name }
+        entry = {'Name': name }
         
         if attrs is not None:
             for key,val in attrs.items():
                 entry[key] = val
 
         self._make_tree(data=[entry], tag=tag)
+
+
+    def add(self, name, node, attrs={}, tag=None):
+        '''add a node based on name to the tree, or return found node
+        '''             
+        # Do we have the package?    
+        found = False
+        for child in node.children:
+
+           # We found the parent
+           if child.label == name:
+
+               # Keep track of how many we have
+               child.counter += 1
+
+               # update node to be child that was found
+               node = child
+               found = True
+               break
+
+        # If we get down here, not found, add new node
+        if not found:
+            new_node = Node(name, attrs)
+            self.count +=1
+
+            # Add to the root (or the last where found)
+            node.children.append(new_node)
+            node = new_node
+
+        # Add the tag to the new (or existing) node
+        if tag is not None:
+            if tag not in node.tags:
+                node.tags.add(tag)
+
+        return node
 
 
     def _make_tree(self, data=None, tag=None):
@@ -360,28 +395,48 @@ class ContainerTreeBase(object):
         return result
 
 
-    def trace(self, name, node=None, traces=[]):
-        '''trace a path in the tree, return all nodes up to it.
-        '''
-
-        # if the user wants a trace, we return all paths up to it
+    def trace(self, name, node=None):
+        '''find a path in the tree and return the node if found.
+           This base function is suited for searches that don't build
+           on themselves (e.g., not filepaths or words)
+         '''
         if node == None:
             node = self.root
 
-        # Did we find the node?
-        if node.label == name:
-            traces.append(node)
-            return traces
+        # Find the node, is it in the tree?
+        tracedNode = self.find(name)
 
-        # Only add intermediate nodes
-        elif node.leaf == False:
-            traces.append(node)
+        # Trace it's path
+        if tracedNode != None:
+            for child in node.children:
+                traces = self._trace(name, child)
+                if tracedNode in traces:
+                    return [self.root] + traces
 
+
+    def _trace(self, name, node, traces=None):
+        '''find a path in the tree and return the node if found.
+           This base function is suited for searches that don't build
+           on themselves (e.g., not filepaths or words)
+        '''
+        if traces == None:
+            traces = []
+
+        # Always add node
+        traces.append(node)
+
+        # Did we find a node?
+        if node.leaf == True:
+            if node.label == name:
+                return traces
+            else:
+                traces = []
+
+        # Keep searching over children        
         for child in node.children:
-            traces = self.trace(name, child, traces)  
-
+            self._trace(name, child, traces)
         return traces
-
+       
     def get_count(self, name):
         '''find a path in the tree and return the node if found
         '''

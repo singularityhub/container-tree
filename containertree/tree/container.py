@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from random import choice
 from containertree.utils import check_install
 import requests
 import json
+import os
+import sys
 
 from .base import ( ContainerTreeBase, Node )
 
@@ -106,61 +107,6 @@ class ContainerTree(ContainerTreeBase):
             node.leaf = True
 
 
-    def find(self, filepath, trace=False):
-        '''find a path in the tree and return the node if found. For a Container
-           Tree, we expect a filepath. This must be the absolute filepath.
-           To do a search, use search instead.
-        '''
-
-        # if the user wants a trace, we return all paths up to it
-        traces = []
- 
-        # We always start at the root  
-        node = self.root
-
-        # No children, no search
-        if len(node.children) == 0:
-            # They were looking for the root
-            if node.label == filepath:
-                return node
-            return
-        
-        filepaths = filepath.split(self.folder_sep)
-        assembled='/'.join(filepaths)
-
-        # Look for the path in the tree
-        for filepath in filepaths:
-
-            if not filepath:
-                continue
-
-            # Comparing basenames (<etc>)
-            if filepath == node.label:
-
-                # Comparing complete assembled path, return node
-                if filepath == assembled:
-                    return node
-
-            else:
-
-                # Try and find the filepath in the tree
-                for child in node.children:
-                    if child.label == filepath:
-                        node = child
-
-                        # Does the user want to return a trace of all nodes?
-                        if trace is True:
-                            traces.append(node)
-
-                        # If the name is what we are looking for, return Node
-                        if node.name == assembled:
-                            if trace is True:
-                                return traces
-                            return node
-                        break
-
-
-
 class ContainerDiffTree(ContainerTree):
     '''a container diff tree is a subclass of ContainerTree, specifically
        ready to read in an analysis result of a files export from Google's 
@@ -198,7 +144,12 @@ class ContainerDiffTree(ContainerTree):
             for entry in data:
                 if "Analysis" in entry and "AnalyzeType" in entry:
                     if entry['AnalyzeType'] == analyze_type:
-                        return entry['Analysis']
+                        analysis = entry['Analysis']
+
+                        # Warn the user if empty
+                        if analysis in [[],{},'', None]:
+                            print('Warning, no data found for %s' % analyze_type)
+                        return analysis
 
             # If we get down here, tell the user cannot find what looking for
             if len(data) == 0:
@@ -210,34 +161,120 @@ class ContainerDiffTree(ContainerTree):
 
 class ContainerFileTree(ContainerDiffTree):
     '''a container file tree will build a file hierarchy tree using the 
-       Container Diff File export.
+       Container Diff File export. This is the base implementation of 
+       ContainerTree, so we don't need to write a function to generate
+       the tree here.
     '''
     def _load(self, data=None):
         return self._filter_container_diff(data, analyze_type="File")
 
+    def find(self, filepath):
+        '''find a path in the tree and return the node if found. For a Container
+           Tree, we expect a filepath. This must be the absolute filepath.
+           To do a search, use search instead.
+        '''
 
-class ContainerAptTree(ContainerDiffTree):
-    '''a container apt tree will generate a container tree based on apt
-       packages.
-    '''
-    def _load(self, data=None):
-        return self._filter_container_diff(data, analyze_type="Apt")
+        # We always start at the root  
+        node = self.root
 
+        # No children, no search
+        if len(node.children) == 0:
+            # They were looking for the root
+            if node.label == filepath:
+                return node
+            return
+        
+        filepaths = filepath.split(self.folder_sep)
+        assembled='/'.join(filepaths)
 
-class ContainerPipTree(ContainerDiffTree):
-    '''a container apt tree will generate a container tree based on pip
-       packages.
-    '''
-    def _load(self, data=None):
-        return self._filter_container_diff(data, analyze_type="Pip")
+        # Look for the path in the tree
+        for filepath in filepaths:
+
+            if not filepath:
+                continue
+
+            # Comparing basenames (<etc>)
+            if filepath == node.label:
+
+                # Comparing complete assembled path, return node
+                if filepath == assembled:
+                    return node
+
+            else:
+
+                # Try and find the filepath in the tree
+                for child in node.children:
+                    if child.label == filepath:
+                        node = child
+
+                        # If the name is what we are looking for, return Node
+                        if node.name == assembled:
+                            return node
+                        break
 
 
 class ContainerPackageTree(ContainerDiffTree):
+    '''a container package tree will generate a container tree based on some
+       package manager. Since the output is from container-diff, we expect
+       the loaded data to conform to the following, a list of:
+
+       [{'Name': 'zlib1g', 'Size': 159744, 'Version': '1:1.2.8.dfsg-5'}..] 
+    '''
+
+    def _make_tree(self, data=None, tag=None):
+        '''construct the tree from the loaded data (self.data)
+           we should already have a root defined. Since we are making
+           the tree for an individual container, the node names are filepaths
+           within the container.
+        '''
+
+        # If function is used for insert, called
+        if data is None:
+            data = self.data
+
+        for package in data:
+
+            # The starting node is the root node
+            node = self.root
+
+            # Add the tag to the new (or existing) node
+            if tag is not None:
+                if tag not in node.tags:
+                    node.tags.add(tag)
+        
+            # Add the new node to the tree based on package name
+            new_node = self.add(package['Name'], node, tag=tag)
+
+            # Add the version Node
+            version_node = self.add(package['Version'], new_node, tag=tag)   
+
+            # The last in the list is the leaf (file)
+            version_node.leaf = True
+
+
+class ContainerPipTree(ContainerPackageTree):
+    '''a container pip tree will generate a container tree based on pip
+       packages.
+    '''
+    def __str__(self):
+        return "ContainerPipTree<%s>" % self.count
+    def __repr__(self):
+        return "ContainerPipTree<%s>" % self.count
+
+    def _load(self, data=None):
+        return self._filter_container_diff(data, analyze_type="Pip")
+
+class ContainerAptTree(ContainerPackageTree):
     '''a container apt tree will generate a container tree based on pip
        packages.
     '''
+    def __init__(self, inputs=None, folder_sep="/", tag=None):
+        super(ContainerTree, self).__init__(inputs, folder_sep, tag)
+
     def _load(self, data=None):
-        pip_list = self._filter_container_diff(data, analyze_type="Pip") or []
-        apt_list = self._filter_container_diff(data, analyze_type="Pip") or []
-        #TODO: inspect, can we do this?
-        return pip_list + apt_list
+        return self._filter_container_diff(data, analyze_type="Apt")
+
+    def __str__(self):
+        return "ContainerAptTree<%s>" % self.count
+    def __repr__(self):
+        return "ContainerAptTree<%s>" % self.count
