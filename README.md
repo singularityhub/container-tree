@@ -30,6 +30,38 @@ centos, and both of them have the path /usr/local/bin. We can then calculate
 similarity metrics by walking the tree and comparing containers defined at each
 node. Intuitively, the root node of the tree is the root of a filesystem /.
 
+## What is a container package tree?
+
+In the case that we want to organize our tree based on packages and versions,
+we can use the container package tree. Specifically, we are interested in 
+pip (python) and apt (debian/ubuntu). Each node of this tree represents one
+level of a package, and to the node we map containers that have the package
+at that level. For example, we might have these levels for the pip tree:
+
+```
+Pip
+   ___ requests
+               ___ requests == 2.0
+               ___ requests == 2.1
+               ___ requests == 2.2
+               ...
+```
+
+Each node above is a particular version of requests, and we map containers to it
+that have that version. Here is the node for requests == 2.2:
+
+```
+Node:
+  name: requests == 2.2
+  count: 2
+  tags ["ubuntu", "centos"]
+```
+
+This means that we can very easily compare containers by doing a single walk
+of the tree. It also means that we can identify the last common ancestor
+for any given package to determine similarity. For example, if two containers
+had different versions of requests, they would be similar up to the level
+of the Node for just "requests."
 
 ## What is a collection tree?
 
@@ -89,11 +121,13 @@ structure under "Analysis". For example:
   'Image': '/tmp/tmp.qXbcpKCWxg/c2f46186d20ce41a1e1cad7b362ad9f6a5b679cd6535e865c4170cc93f4501a4.tar'}]
 ```
 
-We are only interested in the list under "Analysis."
+We are only interested in the list under "Analysis," and the kind of analysis
+might be File, Apt, or Pip. It's unlikely that you'll instantiate a ContainerDiffTree,
+but you might instantiate a ContainerFileTree or ContainerPipTree.
 
 ## Examples
 
-### Create a Container Tree
+### Create a Container File Tree
 
 These examples are also provided in the [examples](examples) folder.
 For this first example, we will be using the [Container API](https://singularityhub.github.io/api/) 
@@ -240,7 +274,7 @@ The new child is the parent node:
 
 ```python
 tree.root.children
-Out[4]: [Node<library/python>]
+[Node<library/python>]
 ```
 
 and it's inherited the previous children.

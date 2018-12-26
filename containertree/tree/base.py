@@ -360,32 +360,27 @@ class ContainerTreeBase(object):
         return result
 
 
-    def trace(self, name, node=None):
+    def trace(self, name, node=None, traces=[]):
         '''trace a path in the tree, return all nodes up to it.
         '''
 
         # if the user wants a trace, we return all paths up to it
-        traces = []
         if node == None:
             node = self.root
 
-        # Always add the current node
-        traces.append(node)
-
         # Did we find the node?
         if node.label == name:
+            traces.append(node)
             return traces
 
-        # No children, we finished search
-        if len(node.children) == 0:
-
-            # Return the node
-            return traces
+        # Only add intermediate nodes
+        elif node.leaf == False:
+            traces.append(node)
 
         for child in node.children:
-            traces += self.trace(name, child)            
-        return traces
+            traces = self.trace(name, child, traces)  
 
+        return traces
 
     def get_count(self, name):
         '''find a path in the tree and return the node if found
