@@ -391,6 +391,18 @@ These are under development! Here are some quick examples:
 
 ![examples/heatmap/heatmap.png](examples/heatmap/heatmap.png)
 
+Generate an example file tree using the [containertree](https://hub.docker.com/r/vanessa/container-tree) Docker container.
+
+```bash
+docker run -it -p 9779:9779 vanessa/container-tree
+Selecting container from https://singularityhub.github.io/api/files...
+Generating files tree!
+ContainerTree<56386>
+Webroot: /tmp/tmpizxgn5jk
+Exporting data for d3 visualization
+Serving at localhost:9779
+```
+
 #### Hierarchy
 
  - [General Tree](https://singularityhub.github.io/container-tree/examples/tree/demo/)

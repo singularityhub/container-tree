@@ -50,4 +50,4 @@ shutil.copyfile(template, "%s/index.html" %webroot)
 # Generate the data.json
 print('Exporting data for d3 visualization')
 tree.export_tree(filename='%s/data.json' %webroot)
-serve_template(webroot)
+serve_template(webroot, 9779)
