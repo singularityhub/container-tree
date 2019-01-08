@@ -25,4 +25,7 @@ from .fileio import (
     check_install    
 )
 
-from .docker import DockerInspector
+from .docker import (
+    parse_image_uri,
+    DockerInspector
+)
