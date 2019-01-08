@@ -20,6 +20,7 @@ from subprocess import (
     PIPE,
     STDOUT
 )
+import fnmatch
 import os
 import tempfile
 

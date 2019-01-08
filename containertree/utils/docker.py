@@ -27,7 +27,91 @@ import sys
 import tempfile
 from .https import get, call
 
+########################################################################
+# Parsing URIs: we assume the user will provide registry and/or ports
 ###############################################################################
+
+_reduced_uri = re.compile("(?:(?P<registry>[^/@]+[.:][^/@]*)/)?"
+                          "(?P<repo>[^:@/]+)"
+                          "(?::(?P<tag>[^:@]+))?"
+                          "(?:@(?P<version>.+))?"
+                          "$"
+                          "(?P<namespace>.)?")
+
+_docker_uri = re.compile("(?:(?P<registry>[^/@]+[.:][^/@]*)/)?"
+                         "(?P<namespace>(?:[^:@/]+/)+)?"
+                         "(?P<repo>[^:@/]+)"
+                         "(?::(?P<tag>[^:@]+))?"
+                         "(?:@(?P<version>.+))?"
+                         "$")
+
+_default_uri = re.compile("(?:(?P<registry>[^/@]+)/)?"
+                          "(?P<namespace>(?:[^:@/]+/)+)"
+                          "(?P<repo>[^:@/]+)"
+                          "(?::(?P<tag>[^:@]+))?"
+                          "(?:@(?P<version>.+))?"
+                          "$")
+
+def parse_image_uri(image, default_tag='latest', default_namespace='library'):
+    '''parse the image uri and return a dictionary to look up namespace,
+       tag, and registry. If the name doesn't match a pattern, we return None.
+
+       Parameters
+       ==========
+       image: the full image uri (e.g., library/ubuntu:latest
+       default_tag: the image tag (e.g., latest) default is latest
+       default_namespace: the default collection (e.g., library)
+    '''
+
+    # Match from docker to default
+    uri_regexes = [ _docker_uri,
+                    _reduced_uri,
+                    _default_uri ]
+
+    for r in uri_regexes:
+        match = r.match(image)
+        if match:
+            break
+
+    if not match:
+        # Calling client should expect None to indicate not parseable
+        print('Could not parse image %s' % image)
+        return None
+
+    registry = match.group('registry')
+    namespace = match.group('namespace')
+    repo_name = match.group('repo')
+    repo_tag = match.group('tag')
+    version = match.group('version')
+
+    if namespace:
+        namespace = namespace.rstrip('/')
+
+    # replace empty fields with defaults
+    if not namespace:
+        namespace = default_namespace
+    if not repo_tag:
+        repo_tag = default_tag
+
+    # Full uri (without registry)
+    nodeuri = "%s/%s" %(namespace, repo_name)
+    fulluri = nodeuri
+    if repo_tag != None:
+        fulluri = "%s:%s" %(fulluri, repo_tag)
+    if version != None:
+        fulluri = "%s@%s" %(fulluri, version)
+
+    # We don't require registry, or version.
+    parsed = {'registry': registry,
+              'namespace': namespace,
+              'repo_name': repo_name,
+              'repo_tag': repo_tag,
+              'version': version,
+              'fullUri': fulluri,
+              'nodeUri': nodeuri }
+
+    return parsed
+
 
 class DockerInspector(object):
 
