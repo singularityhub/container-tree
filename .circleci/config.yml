@@ -10,6 +10,7 @@ workflows:
     jobs:
       - docker-publish/publish:
           image: singularityhub/container-tree
+          dockerfile: docker/Dockerfile
           deploy: false
           tag: latest
           filters:
@@ -32,13 +33,14 @@ workflows:
     jobs:
       - docker-publish/publish:
           image: singularityhub/container-tree
+          dockerfile: docker/Dockerfile
           tag: latest
           filters:
             branches:
              only: master
           after_build:
             - run:
-                name: Publish Docker Tag with SIF Python Version
+                name: Publish Docker Tag with ContainerTree Python Version
                 command: |
                    for string in $(cat containertree/version.py | grep __version__)
                       do

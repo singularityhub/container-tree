@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Vanessa Sochat.
+# Copyright (C) 2019 Vanessa Sochat.
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published by
@@ -14,20 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__version__ = "0.0.42"
-AUTHOR = 'Vanessa Sochat'
-AUTHOR_EMAIL = 'vsochat@stanford.edu'
-NAME = 'containertree'
-PACKAGE_URL = "http://www.github.com/singularityhub/container-tree"
-KEYWORDS = 'generate container trees'
-DESCRIPTION = "Generate container trees"
-LICENSE = "LICENSE"
-
-################################################################################
-# Global requirements
+from containertree.utils import get_templates
+import sys
+import os
 
 
-INSTALL_REQUIRES = (
-    ('requests', {'min_version': '2.18.4'}),
-    ('pygments', {'min_version': '2.1.3'}),
-)
+def main(args):
+    
+    templates = get_templates()
+    print('Templates:\n')
+    print('\n'.join(templates))

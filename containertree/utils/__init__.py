@@ -19,7 +19,10 @@ from .fileio import (
     get_installdir,
     read_json,
     get_template,
+    get_templates,
     get_tmpfile,
+    get_tmpdir,
+    read_file,
     recursive_find,
     run_command,
     check_install    

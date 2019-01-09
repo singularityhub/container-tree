@@ -22,6 +22,7 @@ from subprocess import (
 )
 import fnmatch
 import os
+from glob import glob
 import tempfile
 
 def get_installdir():
@@ -54,6 +55,14 @@ def read_json(filename, mode='r'):
     return data
 
 
+def read_file(filename, mode='r'):
+    '''read_text file and return string of content
+    '''
+    with open(filename, mode) as filey:
+        content = filey.read()
+    return content
+
+
 def get_template(name):
     '''return an html template based on name.
     '''
@@ -64,19 +73,44 @@ def get_template(name):
         return template_file
 
 
-def get_tmpfile(prefix=""):
+def get_templates():
+    '''list ids of html templates (based on name, without extension).
+    '''
+    here = get_installdir()
+    template_folder = os.path.join(here, 'templates')
+    templates = glob('%s/*.html' % template_folder)
+    templates = [os.path.basename(x).replace('.html', '') for x in templates]
+    return templates
+
+
+def get_tmpfile(prefix="", tmpdir=None):
     '''get a temporary file with an optional prefix.
 
        Parameters
        ==========
        prefix: prefix the file with this string.
+       tmpdir: the root directory to use (defaults to new temporary folder)
     '''
-
-    tmpdir = tempfile.mkdtemp()
+    if tmpdir == None:
+        tmpdir = tempfile.mkdtemp()
     prefix = os.path.join(tmpdir, os.path.basename(prefix))
     fd, tmp_file = tempfile.mkstemp(prefix=prefix)
     os.close(fd)
     return tmp_file
+
+
+def get_tmpdir(prefix=""):
+    '''get a temporary folder with an optional prefix.
+
+       Parameters
+       ==========
+       prefix: prefix the file with this string.
+    '''
+    tmpdir = tempfile.gettempdir()
+    tmpfile = get_tmpfile(prefix, tmpdir)
+    os.remove(tmpfile)    
+    os.mkdir(tmpfile)
+    return tmpfile
 
 
 def run_command(cmd, sudo=False):
