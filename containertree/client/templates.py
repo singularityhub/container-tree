@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Vanessa Sochat.
+# Copyright (C) 2019 Vanessa Sochat.
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published by
@@ -14,20 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .https import ( get, call )
-from .fileio import (
-    get_installdir,
-    read_json,
-    get_template,
-    get_templates,
-    get_tmpfile,
-    get_tmpdir,
-    recursive_find,
-    run_command,
-    check_install    
-)
+from containertree.utils import get_templates
+import sys
+import os
 
-from .docker import (
-    parse_image_uri,
-    DockerInspector
-)
+
+def main(args):
+    
+    templates = get_templates()
+    print('Templates:\n')
+    print('\n'.join(templates))

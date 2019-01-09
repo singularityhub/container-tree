@@ -385,16 +385,18 @@ tree.root.children[1].children['latest'][0].children
 {'latest': [MultiNode<singularityhub/sregistry-cli>, MultiNode<vanessa/salad>]}
 ```
 
+# Visualize
 
-### Visualize a Tree
 These are under development! Here are some quick examples:
 
 ![examples/heatmap/heatmap.png](examples/heatmap/heatmap.png)
 
+## Demo
+
 Generate an example file tree using the [containertree](https://cloud.docker.com/u/singularityhub/repository/docker/singularityhub/container-tree) Docker container.
 
 ```bash
-docker run -it -p 9779:9779 singularityhub/container-tree
+$ docker run -it -p 9779:9779 singularityhub/container-tree demo
 Selecting container from https://singularityhub.github.io/api/files...
 Generating files tree!
 ContainerTree<56386>
@@ -402,6 +404,60 @@ Webroot: /tmp/tmpizxgn5jk
 Exporting data for d3 visualization
 Serving at localhost:9779
 ```
+Then open up your browser to [http://localhost:9779](http://localhost:9779).
+The container is randomly selected from the Singularity Hub (static) API.
+
+## Generate Tree from Docker URI
+
+You can generate just static files. Notice that we are telling the container
+to generate output in /data inside the container, which is mapped to 
+an output folder we just created.
+
+```bash
+mkdir -p output
+$ docker run -v $PWD/output:/data -it -p 9779:9779 singularityhub/container-tree generate vanessa/salad --output /data
+```
+
+Then you can see your output files, a data.json and index.html:
+
+```bash
+$ tree output
+output/
+├── data.json
+└── index.html
+```
+
+You can start a temporary server to view the files:
+
+```bash
+cd output
+python -m http.server 9999
+# open localhost:9999
+```
+
+## Tree Templates
+
+The templates provided are each web (html) files that expect a data.json tree.
+To see available templates:
+
+```bash
+$ docker run singularityhub/container-tree templates
+Templates:
+
+collection_tree
+treemap
+similarity_scatter
+heatmap
+tree
+heatmap-large
+files_tree
+container_tree
+shub_tree
+```
+
+And then you can specify a template name with the `--template` argument to the
+generate command. The default is a files tree.
+
 
 #### Hierarchy
 

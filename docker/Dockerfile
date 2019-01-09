@@ -20,7 +20,8 @@ RUN apt-get update && \
     apt-get -y install vim jq aria2 nginx python3 python3-dev \
     automake git locales && \
     wget https://bootstrap.pypa.io/get-pip.py && \
-    python3 get-pip.py
+    python3 get-pip.py && \
+    pip install setuptools
 
 # Install Container-Diff
 RUN go get github.com/GoogleContainerTools/container-diff && \
