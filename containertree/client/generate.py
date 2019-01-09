@@ -48,6 +48,10 @@ def main(args):
     webroot = args.output
     if args.output is None:
         webroot = get_tmpdir('containertree-')
+
+    if not os.path.exists(webroot):
+        os.mkdir(webroot)
+
     bot.debug('Webroot: %s' % webroot)
 
     # Copy the template to the webroot
