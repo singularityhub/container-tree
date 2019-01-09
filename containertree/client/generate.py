@@ -15,8 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from containertree import ContainerFileTree
-from containertree.utils import ( get_tmpdir, get_template )
+from containertree.utils import ( 
+    get_tmpdir, 
+    get_template, 
+    read_json, 
+    read_file
+)
 from containertree.server import serve_template
+from containertree.logger import bot
 import shutil
 import tempfile
 
@@ -36,25 +42,39 @@ def main(args):
 
     # Step 1: Generate container tree object from Docker URI
     tree = ContainerFileTree(image)
-    print(tree)
+    bot.debug(tree)
 
     # Step 2: Create a webroot to serve from
     webroot = args.output
     if args.output is None:
         webroot = get_tmpdir('containertree-')
-    print('Webroot: %s' % webroot)
+    bot.debug('Webroot: %s' % webroot)
 
     # Copy the template to the webroot
     template = get_template(args.template)
     shutil.copyfile(template, "%s/index.html" % webroot)
 
+    # If the user wants to print to terminal, we don't save
+    filename = None
+    if args.printout == None:
+        filename='%s/data.json' % webroot
+
     # Export data.json
-    print('Exporting data for d3 visualization')
-    tree.export_tree(filename='%s/data.json' % webroot)
+    bot.debug('Exporting data for d3 visualization')
+    data = tree.export_tree(filename)
 
     # Does the user want to view the tree?
     if args.view:
         # Generate the data.json
         serve_template(webroot, 9779)
+
+    # Does the user want to print output?
+    elif args.printout != None: 
+        if args.printout == "data.json":
+            data = read_json(data)
+            print(data)
+        elif args.printout == "index.html":
+            template = read_file(template)
+            print(template)
 
     return webroot

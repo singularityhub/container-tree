@@ -55,6 +55,14 @@ def read_json(filename, mode='r'):
     return data
 
 
+def read_file(filename, mode='r'):
+    '''read_text file and return string of content
+    '''
+    with open(filename, mode) as filey:
+        content = filey.read()
+    return content
+
+
 def get_template(name):
     '''return an html template based on name.
     '''

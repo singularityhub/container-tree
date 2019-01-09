@@ -72,6 +72,10 @@ def get_parser():
                            help="output folder to generate static files", 
                            default=None, type=str)
 
+    generate.add_argument('--print', dest="printout", 
+                           help="print a specific output file to the terminal", 
+                           default=None, type=str)
+
     return parser
 
 
@@ -118,7 +122,9 @@ def main():
     except:
         sys.exit(0)
 
-    if args.debug is False:
+    if args.quiet is True:
+        os.environ['MESSAGELEVEL'] = "QUIET"
+    elif args.debug is False:
         os.environ['MESSAGELEVEL'] = "DEBUG"
 
     # Show the version and exit

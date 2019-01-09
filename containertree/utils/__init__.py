@@ -22,6 +22,7 @@ from .fileio import (
     get_templates,
     get_tmpfile,
     get_tmpdir,
+    read_file,
     recursive_find,
     run_command,
     check_install    
