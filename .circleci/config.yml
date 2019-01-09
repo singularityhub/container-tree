@@ -10,7 +10,6 @@ workflows:
     jobs:
       - docker-publish/publish:
           image: singularityhub/container-tree
-          path: docker
           dockerfile: docker/Dockerfile
           deploy: false
           tag: latest
@@ -34,7 +33,6 @@ workflows:
     jobs:
       - docker-publish/publish:
           image: singularityhub/container-tree
-          path: docker
           dockerfile: docker/Dockerfile
           tag: latest
           filters:
