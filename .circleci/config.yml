@@ -22,10 +22,7 @@ workflows:
             - run:
                 name: Preview Docker Tag for Build
                 command: |
-                   for string in $(cat containertree/version.py | grep __version__)
-                      do
-                          DOCKER_TAG="${string//\"}"
-                   done
+                   DOCKER_TAG=$(containertree --version)
                    echo "Version for Docker tag is ${DOCKER_TAG}"
 
   # This workflow will deploy images on merge to master only
@@ -40,11 +37,8 @@ workflows:
              only: master
           after_build:
             - run:
-                name: Publish Docker Tag with SIF Python Version
+                name: Publish Docker Tag with ContainerTree Python Version
                 command: |
-                   for string in $(cat containertree/version.py | grep __version__)
-                      do
-                          DOCKER_TAG="${string//\"}"
-                   done
+                   DOCKER_TAG=$(containertree --version)
                    echo "Version for Docker tag is ${DOCKER_TAG}"
                    docker tag singularityhub/container-tree:latest singularityhub/container-tree:${DOCKER_TAG}
