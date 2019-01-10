@@ -7,6 +7,12 @@ to represent a file or container hierarchy. We can either generate
 or [comparison matrices](https://singularityhub.github.io/container-tree/examples/heatmap/demo/) 
 using them!
 
+  - [Container Trees](#container-trees) a summary of the high level container tree and data structure
+  - [Classes](#classes): different classes for container packages, files, and collections
+  - [Visualizations](#visualizations): various templates that you can produce for trees
+  - [Github Actions](#github-actions): deploy a container tree alongside your container recipes
+
+
 # Container Trees
 
 ## What is a container tree?
@@ -385,7 +391,7 @@ tree.root.children[1].children['latest'][0].children
 {'latest': [MultiNode<singularityhub/sregistry-cli>, MultiNode<vanessa/salad>]}
 ```
 
-# Visualize
+# Visualizations
 
 These are under development! Here are some quick examples:
 
@@ -458,6 +464,16 @@ shub_tree
 And then you can specify a template name with the `--template` argument to the
 generate command. The default is a files tree.
 
+
+# Github Actions
+
+If you want to deploy a container tree to Github pages alongside your Dockerfile,
+meaning that you can add and update a visualization on every change to your
+repository, see [vsoch/containertree](https://www.github.com/vsoch/containertree)
+and the tree it deploys [here](https://vsoch.github.io/containertree). The
+[Dockerfile](docker/Dockerfile) in the subfolder here is the driver to 
+do the extraction. To read a writeup of the work, see 
+[this post](https://vsoch.github.io/2019/github-deploy/).
 
 #### Hierarchy
 
