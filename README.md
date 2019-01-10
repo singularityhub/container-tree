@@ -1,5 +1,7 @@
 # Container Tree
 
+[![CircleCI](https://circleci.com/gh/singularityhub/container-tree.svg?style=svg)](https://circleci.com/gh/singularityhub/container-tree)
+
 This is a library that demonstrates different methods to build container trees. 
 Across different kinds of trees, we generate a [Trie](https://en.wikipedia.org/wiki/Trie) 
 to represent a file or container hierarchy. We can either generate 
