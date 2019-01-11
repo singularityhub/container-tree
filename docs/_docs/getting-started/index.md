@@ -81,6 +81,7 @@ You can learn about:
 
  - Different [classes]({{ site.url }}{{ site.baseurl }}/getting-started/classes/) of container trees.
  - Using the [client]({{ site.url }}{{ site.baseurl }}/getting-started/classes/) to quickly generate trees.
+ - A [writeup](https://vsoch.github.io/2018/container-tree/) in 2018 when the library started development.
 
 ## Licenses
 
