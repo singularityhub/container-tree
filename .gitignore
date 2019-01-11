@@ -1,5 +1,8 @@
+Gemfile.lock
+_plugins
 pypi.sh
 containertree.egg-info/
+_site
 build
 dist
 __pycache__
