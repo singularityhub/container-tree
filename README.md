@@ -10,10 +10,11 @@ or [comparison matrices](https://singularityhub.github.io/container-tree/example
 using them! Learn more by reading the documentation, or follow links to related tools below.
 
   - [Documentation](https://singularityhub.github.io/container-tree/)
-  - [Getting Starte](https://singularityhub.github.io/container-tree/getting-started/)
+  - [Getting Started](https://singularityhub.github.io/container-tree/getting-started/)
+  - [Visualizations](#visualizations)
   - [Github Actions](#github-actions): deploy a container tree alongside your container recipes
 
-If you want to jump in, check out how to create a [Container File Tree](https://singularityhub.github.io/container-tree/examples/files_tree/) as shown [here](https://vsoch.github.io/containertree).
+If you want to jump in, check out how to create a [Container File Tree](https://singularityhub.github.io/container-tree/pages/demo/tree/) as shown [here](https://vsoch.github.io/containertree).
 
 
 # Visualizations
@@ -22,6 +23,10 @@ These are under development! Here are some quick examples:
 
 ![examples/heatmap/heatmap.png](examples/heatmap/heatmap.png)
 
+ - [General Tree](https://singularityhub.github.io/container-tree/pages/demo/tree/)
+ - [Files Tree](https://singularityhub.github.io/container-tree/pages/demo/files_tree/)
+ - [Shub Tree](https://singularityhub.github.io/container-tree/pages/demo/shub_tree/)
+ - [Heatmap](https://singularityhub.github.io/container-tree/pages/demo/heatmap/)
 
 # Github Actions
 
@@ -33,15 +38,5 @@ and the tree it deploys [here](https://vsoch.github.io/containertree). The
 do the extraction. To read a writeup of the work, see 
 [this post](https://vsoch.github.io/2019/github-deploy/).
 
-#### Hierarchy
-
- - [General Tree](https://singularityhub.github.io/container-tree/examples/tree/demo/)
- - [Files Tree](https://singularityhub.github.io/container-tree/examples/files_tree/demo/)
- - [Shub Tree](https://singularityhub.github.io/container-tree/examples/shub_tree/demo/)
-
-
-#### Comparison
-
- - [Heatmap](https://singularityhub.github.io/container-tree/examples/heatmap/demo/)
 
 The examples and their generation are provided in each of the subfolders of the [examples](examples) directory.

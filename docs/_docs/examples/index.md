@@ -16,6 +16,8 @@ a folder and expanding the folder will show the subfolders and files.
 
  - [Tutorial]({{ site.url }}{{ site.baseurl }}/examples/files_tree/)
  - [Code on Github](https://github.com/singularityhub/container-tree/master/examples/files_tree)
+ - [Files Tree Demo](https://singularityhub.github.io/container-tree/pages/demo/files_tree/)
+ - [General Tree Demo](https://singularityhub.github.io/container-tree/pages/demo/tree/)
 
 ## Packages Tree
 
