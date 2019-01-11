@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+from containertree.logger import bot
 from containertree.utils import ( 
     check_install, 
     run_command,
@@ -57,6 +59,8 @@ def _update(self, inputs, tag=None):
     # Last effort is to run container-diff
     elif check_install(quiet=True):
         data = self._load_container_diff(inputs)
+        if not data:
+            bot.warning('No container-diff output found for %s' % inputs)
     else:
          print('Error loading %s' % inputs)
     return data

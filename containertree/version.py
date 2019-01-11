@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__version__ = "0.0.44"
+__version__ = "0.0.45"
 AUTHOR = 'Vanessa Sochat'
 AUTHOR_EMAIL = 'vsochat@stanford.edu'
 NAME = 'containertree'
@@ -31,3 +31,10 @@ INSTALL_REQUIRES = (
     ('requests', {'min_version': '2.18.4'}),
     ('pygments', {'min_version': '2.1.3'}),
 )
+
+
+INSTALL_ANALYSIS = (
+    ('pandas', {'min_version': None}),
+)
+
+INSTALL_REQUIRES_ALL = (INSTALL_REQUIRES + INSTALL_ANALYSIS)
