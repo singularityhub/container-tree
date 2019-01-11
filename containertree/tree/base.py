@@ -250,15 +250,21 @@ class ContainerTreeBase(object):
         # Trace it's path
         if tracedNode != None:
             for child in node.children:
-                traces = self._trace(name, child)
+                traces = self._trace(tracedNode, child)
                 if tracedNode in traces:
                     return [self.root] + traces
 
 
-    def _trace(self, name, node, traces=None):
+    def _trace(self, tracedNode, node, traces=None):
         '''find a path in the tree and return the node if found.
            This base function is suited for searches that don't build
            on themselves (e.g., not filepaths or words)
+
+           Parameters
+           ==========
+           tracedNode: the node we are looking for.
+           node: the current node we are searching
+           traces: a list of nodes we have traced thus far
         '''
         if traces == None:
             traces = []
@@ -266,16 +272,13 @@ class ContainerTreeBase(object):
         # Always add node
         traces.append(node)
 
-        # Did we find a node?
-        if node.leaf == True:
-            if node.label == name:
-                return traces
-            else:
-                traces = []
+        # Did we find the node?
+        if tracedNode in node.children:
+            return traces + [tracedNode]
 
         # Keep searching over children        
         for child in node.children:
-            self._trace(name, child, traces)
+            self._trace(tracedNode, child, traces)
         return traces
        
     def get_count(self, name):

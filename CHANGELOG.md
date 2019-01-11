@@ -7,13 +7,13 @@ and **Merged pull requests**. Critical items to know are:
  - renamed commands
  - deprecated / removed commands
  - changed defaults
- - backward incompatible changes (recipe file format? image file format?)
- - migration guidance (how to convert images?)
- - changed behaviour (recipe sections work differently)
+ - backward incompatible changes
+ - changed behaviour
 
 The versions coincide with releases on pip. Only major versions will be released as tags on Github.
 
 ## [0.0.x](https://github.com/singularityhub/container-tree/tree/master) (0.0.x)
+ - Adding docs, extraction of container feature vectors, and bug fix (0.0.44)
  - Missing logger module (0.0.43)
  - Addition of client and start of Collection Trees (0.0.42)
  - adding ability to load tree from list or dictionary (0.0.4)

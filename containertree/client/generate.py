@@ -75,7 +75,6 @@ def main(args):
     # Does the user want to print output?
     elif args.printout != None: 
         if args.printout == "data.json":
-            data = read_json(data)
             print(data)
         elif args.printout == "index.html":
             template = read_file(template)
