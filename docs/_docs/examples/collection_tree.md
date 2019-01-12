@@ -1,7 +1,7 @@
 ---
 title: Create a Collection Tree
 category: Examples
-order: 4
+order: 3
 ---
 
 We've recently added a new kind of tree, the collection tree! With a collection 
