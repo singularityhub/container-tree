@@ -230,7 +230,9 @@ class ContainerPackageTree(ContainerDiffTree):
 
 
     def export_vectors(self, node=None, df=None, include_tags=None, 
-                             skip_tags=None, regexp_tags=None):
+                             skip_tags=None, regexp_tags=None, 
+                             include_versions=False, level=0,
+                             package=None):
         '''export one or more vectors to describe containers mapped to a
            package tree. Optionally, the user can include or disclude a set
            of containers, or include/disclude version strings.
@@ -242,6 +244,9 @@ class ContainerPackageTree(ContainerDiffTree):
            include_tags: a list of container uris to include
            skip_tags: a list o container uris to skip
            regexp_tags: include tags based ona regular expression
+           include_versions: optionally include versions as part of the features
+           package: if the user wants versions, we pass the parent package to
+                    the child version node
         '''
         # Only import pandas once
         if "pandas" not in locals():
@@ -271,14 +276,31 @@ class ContainerPackageTree(ContainerDiffTree):
             if regexp_tags != None:
                 containers = [x for x in containers if re.search(regexp_tags,x)]
 
-            # Add the node packages to the tree
-            for container in containers:
-                df.loc[container, node.label] = 1
+            label = node.label
+            add_packages = False
 
+            # If the user wants to include versions, and we are on the verison level
+            if include_versions and level == 2:
+                label = '%s-v%s' %(package, label)
+                add_packages = True
+
+            elif not include_versions and level == 1:
+                add_packages = True
+
+            # Add the node packages to the tree
+            if add_packages:
+                for container in containers:
+                    df.loc[container, label] = 1
+
+        # Go through children
+        level += 1
         for child in node.children:
             df = self.export_vectors(child, df, include_tags, 
                                                 skip_tags, 
-                                                regexp_tags)
+                                                regexp_tags,
+                                                include_versions,
+                                                level,
+                                                node.label)
         
         return df
 
