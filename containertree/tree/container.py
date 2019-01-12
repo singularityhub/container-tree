@@ -20,6 +20,7 @@ from containertree.utils import check_install
 import requests
 import json
 import os
+import re
 import sys
 
 from .base import ( ContainerTreeBase, Node )
@@ -27,8 +28,8 @@ from .base import ( ContainerTreeBase, Node )
 
 class ContainerTree(ContainerTreeBase):
 
-    def __init__(self, inputs=None, folder_sep="/", tag=None):
-        super(ContainerTree, self).__init__(inputs, folder_sep, tag)
+    def __init__(self, inputs=None, tag=None, folder_sep="/"):
+        super(ContainerTree, self).__init__(inputs, tag, folder_sep)
 
     def __str__(self):
         return "ContainerTree<%s>" % self.count
@@ -165,6 +166,7 @@ class ContainerFileTree(ContainerDiffTree):
        ContainerTree, so we don't need to write a function to generate
        the tree here.
     '''
+
     def _load(self, data=None):
         return self._filter_container_diff(data, analyze_type="File")
 
@@ -221,6 +223,88 @@ class ContainerPackageTree(ContainerDiffTree):
        [{'Name': 'zlib1g', 'Size': 159744, 'Version': '1:1.2.8.dfsg-5'}..] 
     '''
 
+    def __str__(self):
+        return "Container%sTree<%s>" % (self.analyze_type, self.count)
+    def __repr__(self):
+        return "Container%sTree<%s>" % (self.analyze_type, self.count)
+
+
+    def export_vectors(self, node=None, df=None, include_tags=None, 
+                             skip_tags=None, regexp_tags=None, 
+                             include_versions=False, level=0,
+                             package=None):
+        '''export one or more vectors to describe containers mapped to a
+           package tree. Optionally, the user can include or disclude a set
+           of containers, or include/disclude version strings.
+
+           Parameters
+           ==========
+           node: the node to start the export at (default is root)
+           df: the pandas dataframe to update or continue adding to
+           include_tags: a list of container uris to include
+           skip_tags: a list o container uris to skip
+           regexp_tags: include tags based ona regular expression
+           include_versions: optionally include versions as part of the features
+           package: if the user wants versions, we pass the parent package to
+                    the child version node
+        '''
+        # Only import pandas once
+        if "pandas" not in locals():
+            import pandas
+
+        # Checks if we have initialized the df yet (can't compare to None)
+        if not hasattr(df, 'add'):
+            df = pandas.DataFrame()
+
+        if node == None:
+            node = self.root
+
+        # Skip the root node (label is '')
+        if node.label != '':
+            
+            containers = node.tags
+
+            # If the user is limiting the containers to include
+            if include_tags != None:
+                containers = containers.intersection(set(include_tags))
+
+            # If the user is skipping containers or tags
+            if skip_tags != None:
+                containers = [x for x in containers if x not in skip_tags]
+
+            # If the user wants regular expression filtering
+            if regexp_tags != None:
+                containers = [x for x in containers if re.search(regexp_tags,x)]
+
+            label = node.label
+            add_packages = False
+
+            # If the user wants to include versions, and we are on the verison level
+            if include_versions and level == 2:
+                label = '%s-v%s' %(package, label)
+                add_packages = True
+
+            elif not include_versions and level == 1:
+                add_packages = True
+
+            # Add the node packages to the tree
+            if add_packages:
+                for container in containers:
+                    df.loc[container, label] = 1
+
+        # Go through children
+        level += 1
+        for child in node.children:
+            df = self.export_vectors(child, df, include_tags, 
+                                                skip_tags, 
+                                                regexp_tags,
+                                                include_versions,
+                                                level,
+                                                node.label)
+        
+        return df
+
+
     def _make_tree(self, data=None, tag=None):
         '''construct the tree from the loaded data (self.data)
            we should already have a root defined. Since we are making
@@ -256,25 +340,21 @@ class ContainerPipTree(ContainerPackageTree):
     '''a container pip tree will generate a container tree based on pip
        packages.
     '''
-    def __str__(self):
-        return "ContainerPipTree<%s>" % self.count
-    def __repr__(self):
-        return "ContainerPipTree<%s>" % self.count
+    def __init__(self, inputs=None, tag=None, folder_sep="/"):
+        self.analyze_type = "Pip"
+        super(ContainerPipTree, self).__init__(inputs, tag, folder_sep)
 
     def _load(self, data=None):
-        return self._filter_container_diff(data, analyze_type="Pip")
+        return self._filter_container_diff(data, self.analyze_type)
+
 
 class ContainerAptTree(ContainerPackageTree):
     '''a container apt tree will generate a container tree based on pip
        packages.
     '''
-    def __init__(self, inputs=None, folder_sep="/", tag=None):
-        super(ContainerTree, self).__init__(inputs, folder_sep, tag)
+    def __init__(self, inputs=None, tag=None, folder_sep="/"):
+        self.analyze_type = "Apt"
+        super(ContainerAptTree, self).__init__(inputs, tag, folder_sep)
 
     def _load(self, data=None):
-        return self._filter_container_diff(data, analyze_type="Apt")
-
-    def __str__(self):
-        return "ContainerAptTree<%s>" % self.count
-    def __repr__(self):
-        return "ContainerAptTree<%s>" % self.count
+        return self._filter_container_diff(data, self.analyze_type)

@@ -31,7 +31,7 @@ from .loading import (
 
 class ContainerTreeBase(object):
 
-    def __init__(self, inputs=None, folder_sep='/', tag=None):
+    def __init__(self, inputs=None, tag=None, folder_sep='/'):
         '''construct a container tree from some export of files or 
            a string to indicate a container. This is determined by
            the subclass.

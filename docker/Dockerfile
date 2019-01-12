@@ -17,7 +17,7 @@ LABEL "homepage"="https://www.github.com/singularityhub/container-tree"
 LABEL "maintainer"="@vsoch"
 
 RUN apt-get update && \
-    apt-get -y install vim jq aria2 nginx python3 python3-dev \
+    apt-get -y install vim jq aria2 nginx python3 python3-dev python3-pandas \
     automake git locales && \
     wget https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \

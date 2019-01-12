@@ -65,6 +65,9 @@ LICENSE = lookup['LICENSE']
 if __name__ == "__main__":
 
     INSTALL_REQUIRES = get_reqs(lookup)
+    ANALYSIS = get_reqs(lookup, 'INSTALL_ANALYSIS')
+    INSTALL_REQUIRES_ALL = get_reqs(lookup, 'INSTALL_REQUIRES_ALL')
+
     setup(name=NAME,
           version=VERSION,
           author=AUTHOR,
@@ -79,6 +82,10 @@ if __name__ == "__main__":
           description=DESCRIPTION,
           keywords=KEYWORDS,
           install_requires = INSTALL_REQUIRES,
+          extras_require={
+              'all': [INSTALL_REQUIRES_ALL],
+              'analysis': [ANALYSIS]
+          },
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
