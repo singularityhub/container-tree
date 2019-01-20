@@ -25,6 +25,7 @@ from containertree.utils import (
     get_tmpfile
 )
 import os
+import re
 import sys
 import json
 import requests
