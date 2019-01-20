@@ -79,11 +79,10 @@ we have parsed. For this kind of tree, the root node is the scratch base image.
 
 You can learn about:
 
- - Different [classes]({{ site.url }}{{ site.baseurl }}/getting-started/classes/) of container trees.
- - Using the [client]({{ site.url }}{{ site.baseurl }}/getting-started/classes/) to quickly generate trees.
+ - Different [classes]({{ site.url }}/getting-started/classes/) of container trees.
+ - Using the [client]({{ site.url }}/getting-started/classes/) to quickly generate trees.
  - A [writeup](https://vsoch.github.io/2018/container-tree/) in 2018 when the library started development.
 
 ## Licenses
 
 This code is licensed under the Affero GPL, version 3.0 or later [LICENSE](LICENSE).
-The SIF Header format is licesed by [Sylabs](https://github.com/sylabs/sif/blob/master/pkg/sif/sif.go).

@@ -20,7 +20,7 @@ The set of classes below are likely what you want to import and use in Python.
 ### ContainerFileTree
 
 The Container File Tree will create a tree that describes one or more containers,
-where each node is a folder in the path. See the [tutorial]({{ site.url }}{{ site.baseurl }}/examples/files_tree/)
+where each node is a folder in the path. See the [tutorial]({{ site.url }}/examples/files_tree/)
 for a walk through and example nodes.
 
 ### Container Package Trees
@@ -33,7 +33,7 @@ of packages across containers. From the container Apt or Pip tree you can easily
 compare containers based on packages within, or export a feature matrix
 with containers (rows) by packages (columns).
 
- - [ContainerPackageTrees tutorial]({{ site.url }}{{ site.baseurl }}/examples/package_tree/)
+ - [ContainerPackageTrees tutorial]({{ site.url }}/examples/package_tree/)
 
 
 ### CollectionTree
@@ -43,7 +43,7 @@ node contains a dictionary of the possible tags for the general namespace.
 These trees are ideal for representing relationships between large sets of containers,
 and can also be used to calculate comparisons via distances in the tree.
 
- - [CollectionTree tutorial]({{ site.url }}{{ site.baseurl }}/examples/collection_tree/)
+ - [CollectionTree tutorial]({{ site.url }}/examples/collection_tree/)
 
 
 ## Abstract Classes
