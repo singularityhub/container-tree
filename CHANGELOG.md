@@ -13,6 +13,7 @@ and **Merged pull requests**. Critical items to know are:
 The versions coincide with releases on pip. Only major versions will be released as tags on Github.
 
 ## [0.0.x](https://github.com/singularityhub/container-tree/tree/master) (0.0.x)
+ - fixing bug that containers named with http/ look like urls, adding no cache (0.0.46)
  - Adding docs, extraction of container feature vectors, and bug fix (0.0.44)
  - Missing logger module (0.0.43)
  - Addition of client and start of Collection Trees (0.0.42)

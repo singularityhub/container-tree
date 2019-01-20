@@ -116,4 +116,3 @@ singularityhub/container-tree               1.0             1.0        1.0
                                setuptools-v40.6.3  six-v1.10.0  wheel-v0.32.3  
 singularityhub/container-tree                 1.0          1.0            1.0  
 ```
-

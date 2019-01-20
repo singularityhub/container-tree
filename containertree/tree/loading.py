@@ -44,7 +44,7 @@ def _update(self, inputs, tag=None):
     data = None
 
     # Load data from web / url
-    if inputs.startswith('http'):
+    if re.search("https?://", inputs):
         data = self._load_http(inputs)
 
     # Load data from file
@@ -177,7 +177,8 @@ def _load_container_diff(self, container_name, output_file=None, types=None):
 
     cmd = ["container-diff", "analyze", container_name]
     response = run_command(cmd + types + ["--output", output_file, "--json",
-                                          "--quiet","--verbosity=panic"])
+                                          "--quiet", "--no-cache",
+                                          "--verbosity=panic"])
 
     if response['return_code'] == 0 and os.path.exists(output_file):
         layers = read_json(output_file)
