@@ -51,7 +51,8 @@ def _update(self, inputs, tag=None):
     # Load data from file
     elif os.path.exists(inputs):
         if inputs.endswith('json'):
-            data = self._load_file(inputs)
+            data = self._load_json(inputs)
+
         # Otherwise, pass on the filepath to the _load function
         else:
             print('Unrecognized extension, passing %s to _load subclass' % inputs) 
