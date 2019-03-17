@@ -80,3 +80,11 @@ else:
 
     # Save final tree
     pickle.dump(tree, open('container-collection-tree.pkl','wb'))
+
+
+    # Now add nodes onto library
+    for pair in pairs:
+        tree.update(uri=pair[0], fromuri=pair[1])
+
+    # Save final tree
+    pickle.dump(tree, open('container-collection-tree.pkl','wb'))
