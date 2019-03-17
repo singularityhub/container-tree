@@ -589,6 +589,89 @@ class CollectionTree(object):
 
         return nodes
 
+
+
+    def export_dockerfile(self, base='busybox:latest', filename=None):
+        '''save a Dockerfile (defaults to Dockerfile.collection-tree that
+           will build a container with the tree represented as a filesystem.
+
+           Parameters
+           ==========
+           base: the docker base container to use
+           filename: if defined, write data to file (and return) otherwise
+           return list of commands
+
+        '''
+
+        # We will call this recursively to get the leaf nodes only
+ 
+        def traverse(nodes={}, current=None):
+
+            colors = ['#0000FF', # blue
+                      '#FF7F00', # orange
+                      '#FF0000', # red
+                      '#7F007F', # purple
+                      '#00FFFF', # cyan
+                      '#0560D0'] # generic blue
+
+            if current is None:
+                current = self.root
+
+            tags = list(current.tags)
+
+            # If not the root node (scratch, tags are in keys)
+            if not isinstance(current.children, list):
+                tags += list(current.children.keys())
+
+            new_node = {'color': choice(colors),
+                        'key': current.label,
+                        'name': current.label,
+                        'tags': tags,
+                        'attrs': current.get_attributes(),
+                        'children': [] }
+
+            # Add the size if was provided!
+            if hasattr(current, 'size'):
+                new_node['size'] = current.size
+
+            if len(nodes) == 0:
+                nodes.update(new_node)
+            else:            
+                nodes['children'].append(new_node)
+
+            # Case 1: We are at the root (and have list)
+            if isinstance(current.children, list):
+                children = current.children
+            else:
+                children = []
+                for tag in current.children:
+                    children += current.children[tag]
+
+            # Traverse remainder of children
+            for child in children:
+                traverse(nodes=new_node, current=child)
+
+        nodes = dict()
+        traverse(nodes)
+                
+        # If the user provided a file, export to it
+        if filename is not None:
+            with open(filename, 'w') as filey:
+                filey.writelines(json.dumps(nodes))
+            return filename
+
+        return nodes
+
+
+
+
+
+
+
+
+
+
+
        
     def get_count(self, name, tag=None):
         '''find a path in the tree and return the node if found
