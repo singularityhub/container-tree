@@ -37,19 +37,23 @@ from .loading import (
 
 class CollectionTree(object):
 
-    def __init__(self, inputs=None, tag=None):
+    def __init__(self, inputs=None, tag=None, first_level='library'):
         '''a collection tree is similar to a container tree, except instead
            of a filesystem we have a tree of containers, where we walk up
            the tree (finding parents via the Dockerfile) until we get to scratch
            or cannot proceed (with a 404, etc.) We produce a tree of containers
            that are based on FROM statements, and we obtain the metadata about
            the containers from container-diff. The root of the tree (scratch)
-           is the only one to be of type "Node"
+           is the only one to be of type "Node." We define the base family
+           of the tree as library, and this is used to control what can be 
+           added. If you don't want to limit the root node's first level,
+           then set first_level to an empty string.
         '''
 
         # Update the root to be for scratch
         self.root = Node('scratch', {'size': 0, 'Name': 'scratch'}, tag=None)
         self.data = None
+        self._first_level = first_level
          
         # Count the nodes
         self.count = 1
@@ -60,17 +64,18 @@ class CollectionTree(object):
 
         # If data is loaded, make the tree
         if self.data:
-            self._make_tree(tag=tag)
+            self._make_tree(tag=tag, first_level=first_level)
 
     def __str__(self):
         return "CollectionTree<%s>" % self.count
     def __repr__(self):
         return "CollectionTree<%s>" % self.count
 
+
 # Add / Remove Operations
 
 
-    def remove(self, name, node=None, tag=None, parent=None, parent_tag=None, idx=None):
+    def remove(self, name, node=None, tag=None):
         '''find a path in the tree and remove (and return) the node if found.
            The function returns None if the Node wasn't in the tree (and wasn't
            found and removed). The way this is designed, we cannot remove the
@@ -78,62 +83,67 @@ class CollectionTree(object):
            remove entire node with children tags.
          '''
 
+        # Special case of first call, run function on root
         if node == None:
             node = self.root
+            return self.remove(name, node, tag)
 
-        # Did we find the node based on name?
-        if node.label == name:
+        # Set removed node to None
+        removed = None
 
-            removed = deepcopy(node)
+        # Iterate through children, and look for name
+        # The top level of the tree doesn't have tags
+        if isinstance(node.children, list):
+            for child in node.children:
 
-            # Case 1: we want to remove the entire namespace
-            if tag == None:          
-                del node
+                # Did we find the node?
+                if child.label == name:
 
-            # Otherwise copy the node, remove from parent
-            elif tag in node.children:
-               
-               # Only keep tag of interest
-               new_children = {tag : removed.children[tag]}
-               removed.children = new_children
-         
-               # Remove tag from the node always
-               del node.children[tag]
+                    # Case 1: we are given a tag
+                    if tag != None:
+                        if tag in child.children:
+                            del child.children[tag]
 
-               # If no more children tags, remove entire node
-               if len(node.children) == 0:
-                   if parent_tag != None:
-                       del parent.children[parent_tag][idx]
-                   else:
-                       del parent.children[idx]
+                    # Case 2: we delete the entire node (and all tags)
+                    else:
+                        node.children.remove(child)
 
-            return removed
-
-        # Are we starting at scratch?
-        elif isinstance(node.children, list):
-
-            for c in range(len(node.children)):
-                child = node.children[c]
-                removed = self.remove(name, child, tag, node, idx=c)
+                    # Return the deleted node
+                    return child
+                
+                # If we don't find the node, look for it in child
+                removed = self.remove(name, child, tag)
                 if removed != None:
                     return removed
+
+        # All other nodes have dictionaries
         else:
 
-            # Continue searching through children
-            for child_tag in node.children:
-                children = node.children[child_tag]
+            for child_tag, children in node.children.items():
 
-                # Skip over empty lists of children
-                if len(children) > 0:
+                for child in children:
 
-                    for c in range(len(children)):
-                        child = children[c]
+                    # Did we find the node?
+                    if child.label == name:
 
-                        # Use parent, child, and current tag to locate in tree
-                        removed = self.remove(name, child, tag, node, child_tag, c)
-                        if removed != None:
-                            return removed
-        return None
+                        # Case 1: we are given a tag
+                        if tag != None:
+                            if tag in child.children:
+                                del child.children[tag]
+
+                        # Case 2: we delete the entire node (and all tags) from list
+                        else:
+                            node.children[child_tag].remove(child)
+
+                        # Return the deleted node
+                        return child
+                  
+                    # If we don't find the node, look for it in child
+                    removed = self.remove(name, child, tag)
+                    if removed != None:
+                        return removed
+
+        return removed
 
 
 # Searching Functions
@@ -183,6 +193,7 @@ class CollectionTree(object):
     def search(self, name, number=None, node=None, tag=None):
         '''find a basename in the tree. If number is defined, return
            up to that number. 
+           #TODO: need to test this
         '''
         found = []
  
@@ -207,10 +218,18 @@ class CollectionTree(object):
             if len(found) >= number:
                 return found
 
-        # Not at current node, search children!
-        for child_tag in node.children:
-            for children in node.children[child_tag]:
-                for child in children:
+        # If we are at the root, going over a list
+        if isinstance(node.children, list):
+            for child in node.children:
+                found += self.search(name, number, child, tag)
+                if number != None:
+                    if len(found) >= number:
+                        return found
+
+        # Otherwise, we have dictionary nodes
+        else:
+            for child_tag in node.children:
+                for child in node.children[child_tag]:
                     found += self.search(name, number, child, tag)
                     if number != None:
                         if len(found) >= number:
@@ -329,7 +348,6 @@ class CollectionTree(object):
     def update(self, uri, fromuri, tag=None):
         '''update will load in new data (without distributing an old self.data)
         '''
-
         # Loads {"Image": ... "From": ...}, unless Dockerfile not found
         data = self._load(uri, fromuri)
 
@@ -389,7 +407,7 @@ class CollectionTree(object):
         else:
             nodeFrom.counter += 1
 
-        # If the tag isn't there, add it
+        # If the tag isn't there, add it (this is the parent)
         if uriFrom['repo_tag'] not in nodeFrom.children:
             nodeFrom.children[uriFrom['repo_tag']] = []
 
@@ -400,15 +418,22 @@ class CollectionTree(object):
         else:
             nodeImage.counter += 1
 
-        # Add the tag if it's not there
+        # Add the (child) tag if it's not there
         if uriImage['repo_tag'] not in nodeImage.children:
             nodeImage.children[uriImage['repo_tag']] = []
 
+        # Remove the nodeImage from the tree, if it's found
+        self.remove(name = nodeImage.label, tag=uriImage['repo_tag'])
+       
         # We now have a nodeFrom and a nodeImage, append nodeImage
-        nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+        if nodeImage not in nodeFrom.children[uriFrom['repo_tag']]:
+            nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+
+        # If it was a leaf, no longer is
+        nodeFrom.leaf = False
 
         # We only append library to the root.
-        if append_root is True and nodeFrom.label.startswith('library'):
+        if append_root is True and nodeFrom.label.startswith(self._first_level):
             if nodeFrom not in self.root.children:
                 self.root.children.append(nodeFrom)
 
@@ -417,104 +442,81 @@ class CollectionTree(object):
                 nodeImage.tags.add(tag)
 
 
+# Export Functions
 
-    def _makeda_tree(self, uri, fromuri, tag=None):
-        '''construct the tree from the loaded data (self.data) which for
-           this collection tree is a URI for a Docker image. Since we are making
-           the tree starting with a single container and building based on
-           FROM statements, the nodes correspond to different containers,
-           and they are tagged with container tags.
-
-           The tree has a structure that has namespace as node, and tags
-           as internal dictionaries to point to lists of children. For
-           example:
- 
-               Node<mhart/alpine-node>
-                  {"children":     
-                      {"4": [] }
-                      {"6": [] }
-                  }
-
-           When we export the tree, the children get combined into one list
-           and tagged with their parent tag.
+    def paths(self, leaves_only=False):
+        '''Get all paths to nodes, as an iterator
 
            Parameters
            ==========
-           uri: the container uri to add
-           fromuri: the from uri (the parent of the container, or it's base)
-           tag: if defined, a tag to give the node (not the container tag)
+           leaves_only: only export leaf nodes
         '''
-        # Parse the uri to get namespace, and rest
-        uriImage = parse_image_uri(uri)
-        uriFrom = parse_image_uri(fromuri)        
 
-        # Update uri and fromuri
-        uri = uriImage['nodeUri']
-        fromuri = uriFrom['nodeUri']
+        def traverse(current, path=''):
 
-        # Find the node in the tree, if it exists (the uri without tag/version)
-        nodeImage = self.find(uri, tag=uriImage['repo_tag'])
-        nodeFrom = self.find(fromuri, tag=uriFrom['repo_tag'])  
+            # Update the path with the current
+            path = path + '/' + current.name
 
-        # Case 1: Both Child and Parent are in Tree
-        if nodeImage != None and nodeFrom != None:
-            nodeImage.counter += 1
-            nodeFrom.counter += 1
+            # Does the user want to export leaves only?
+            if (leaves_only and current.leaf) or not leaves_only:
+                yield path
 
-        # Case 2: Parent is in tree, but not child
-        elif nodeImage == None and nodeFrom != None:
-            nodeImage = MultiNode(uri, {"Name": uri })
-            nodeImage.leaf = True
+            # Case 1: We are at the root (and have list)
+            if isinstance(current.children, list):
+                for child in current.children:
+                    for new_path in traverse(child, path):
+                        yield new_path
 
-            # Tags for image represented until children
-            nodeImage.children[uriImage['repo_tag']] = []
-
-            # Add the tag as a child (we found node, we know tag is there)
-            # Case 2A: nodeFrom is the root, scratch doesn't have tags
-            if isinstance(nodeFrom.children, list):
-                nodeFrom.children.append(nodeImage)
+            # Case 2: we have a dictionary
             else:
-                nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+                for tag, children in current.children.items():
+                    for child in children:
+                        for new_path in traverse(child, path):
+                            yield new_path
 
-        # Case 3: Child is in tree, but not parent
-        elif nodeImage != None and nodeFrom == None:
 
-            # Look to see if node exists (we know tag doesn't)
-            nodeFrom = self.find(fromuri)  
-            
-            # If still None, we need an entire new Node!
-            if nodeFrom == None:
-                nodeFrom = MultiNode(fromuri, {"Name": fromuri })
+        for path in traverse(self.root):
+            yield path
 
-            # Do we need to add the tag?
-            if uriFrom['repo_tag'] not in nodeFrom.children:
-                nodeFrom.children[uriFrom['repo_tag']] = []
 
-            # Remove the nodeImage (just removes the tag, returns node
-            # with just that tag
-            nodeImage = self.remove(name=uri, tag=uriImage['repo_tag'])
-            nodeImage.counter += 1
+    def get_paths(self, leaves_only=False):
+        '''Get all paths to nodes, in a list.
 
-            # Add as child to new parent (this is first tag defined)
-            nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+           Parameters
+           ==========
+           leaves_only: only get leaf nodes
+        '''
+        return list(self.paths(leaves_only))
 
-            # If we found it on the second try, might already exist 
-            if nodeFrom not in self.root.children:
-                self.root.children.append(nodeFrom)
 
-        # Case 4: Both aren't in tree
-        if nodeImage == None and nodeFrom == None:
-            nodeFrom = MultiNode(fromuri, {"Name": fromuri })
-            nodeImage = MultiNode(uri, {"Name": uri })
-            nodeImage.leaf = True
-            nodeImage.children[uriImage['repo_tag']] = []
-            nodeFrom.children[uriFrom['repo_tag']] = [nodeImage]
-            self.root.children.append(nodeFrom)
+    def get_nodes(self):
+        '''return a list of nodes (a call to __iter__)
+        '''
+        return list(self.__iter__())
 
-        if tag is not None:
-            if tag not in nodeImage.tags:
-                nodeImage.tags.add(tag)
 
+    def __iter__(self):
+        '''an iterator over MultiNodes to yield nodes, one at a time.
+        '''
+        def traverse(current):
+
+            # The root node will have a list of children
+            if isinstance(current.children, list):
+                for child in current.children:
+                    yield child
+                    for child in traverse(child):
+                        yield child
+
+            # All other nodes are a dictionary
+            else:
+                for child_tag, children in current.children.items():
+                    for child in children:
+                        yield child
+                        for child in traverse(child):
+                            yield child
+
+        for node in traverse(self.root):
+            yield node  
 
 
     def export_tree(self, filename=None):
@@ -588,89 +590,6 @@ class CollectionTree(object):
             return filename
 
         return nodes
-
-
-
-    def export_dockerfile(self, base='busybox:latest', filename=None):
-        '''save a Dockerfile (defaults to Dockerfile.collection-tree that
-           will build a container with the tree represented as a filesystem.
-
-           Parameters
-           ==========
-           base: the docker base container to use
-           filename: if defined, write data to file (and return) otherwise
-           return list of commands
-
-        '''
-
-        # We will call this recursively to get the leaf nodes only
- 
-        def traverse(nodes={}, current=None):
-
-            colors = ['#0000FF', # blue
-                      '#FF7F00', # orange
-                      '#FF0000', # red
-                      '#7F007F', # purple
-                      '#00FFFF', # cyan
-                      '#0560D0'] # generic blue
-
-            if current is None:
-                current = self.root
-
-            tags = list(current.tags)
-
-            # If not the root node (scratch, tags are in keys)
-            if not isinstance(current.children, list):
-                tags += list(current.children.keys())
-
-            new_node = {'color': choice(colors),
-                        'key': current.label,
-                        'name': current.label,
-                        'tags': tags,
-                        'attrs': current.get_attributes(),
-                        'children': [] }
-
-            # Add the size if was provided!
-            if hasattr(current, 'size'):
-                new_node['size'] = current.size
-
-            if len(nodes) == 0:
-                nodes.update(new_node)
-            else:            
-                nodes['children'].append(new_node)
-
-            # Case 1: We are at the root (and have list)
-            if isinstance(current.children, list):
-                children = current.children
-            else:
-                children = []
-                for tag in current.children:
-                    children += current.children[tag]
-
-            # Traverse remainder of children
-            for child in children:
-                traverse(nodes=new_node, current=child)
-
-        nodes = dict()
-        traverse(nodes)
-                
-        # If the user provided a file, export to it
-        if filename is not None:
-            with open(filename, 'w') as filey:
-                filey.writelines(json.dumps(nodes))
-            return filename
-
-        return nodes
-
-
-
-
-
-
-
-
-
-
 
        
     def get_count(self, name, tag=None):
