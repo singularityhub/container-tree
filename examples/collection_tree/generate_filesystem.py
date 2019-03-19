@@ -18,10 +18,6 @@ from containertree import CollectionTree
 import sys
 import os
 
-################################################################################
-# Generate Collection Tree
-################################################################################
-
 
 if not os.path.exists('container-collection-tree.pkl'):
     print('Please put container-collection-tree.pkl in PWD, creating dummy.')
@@ -39,5 +35,6 @@ else:
     tree.update('continuumio/miniconda3', 'library/python')
     
     print('Creating paths...')
-    for path in tree.get_paths():
+    for path in tree.get_paths(tag_prefix='TAG__', leaves_only=True):
+        print('mkdir -p %s' % path)
         os.makedirs(path)
