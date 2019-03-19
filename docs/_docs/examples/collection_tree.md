@@ -226,3 +226,98 @@ MultiNode<continuumio/miniconda3>
 ```
 
 The function will still return the entire node, but the tag will be removed.
+
+
+## Collection Tree Filesystems
+
+The goal of the container tree filesystem is to write the tree into files and
+folders, and then use standard linux tools to make inferences. Cool! 
+Let's start by creating a simple tree:
+
+```python
+from containertree import CollectionTree
+
+# Initialize a collection tree
+tree = CollectionTree()
+tree.update('continuumio/miniconda3', 'library/debian')
+tree.update('singularityhub/containertree', 'continuumio/miniconda3')
+tree.update('singularityhub/singularity-cli', 'continuumio/miniconda3')
+tree.update('continuumio/miniconda3:1.0', 'library/debian')
+tree.update('childof/miniconda3','continuumio/miniconda3:1.0')
+tree.update('continuumio/miniconda3', 'library/python')
+```
+
+We can use an iterator to go over the nodes:
+
+```python
+for node in tree:
+    print(node)
+
+MultiNode<library/debian>,
+MultiNode<library/python>,
+MultiNode<continuumio/miniconda3>,
+MultiNode<singularityhub/containertree>,
+MultiNode<singularityhub/singularity-cli>,
+MultiNode<childof/miniconda3>
+```
+
+We can also return the nodes to a list:
+
+```python
+nodes = tree.get_nodes()
+```
+
+If we are creating a container collection filesystem (meaning representing
+each collection as a full path, with tags as folders starting with . (or
+another character of your choice):
+
+```python
+for path in tree.paths():
+    print(path)
+
+/scratch
+/scratch/library/debian
+/scratch/library/python
+/scratch/library/python/.latest/continuumio/miniconda3
+/scratch/library/python/.latest/continuumio/miniconda3/.latest/singularityhub/containertree
+/scratch/library/python/.latest/continuumio/miniconda3/.latest/singularityhub/singularity-cli
+/scratch/library/python/.latest/continuumio/miniconda3/.1.0/childof/miniconda3
+```
+
+A folder that represents a tag is prefixed with ".". You can change this to be something
+else:
+
+```python
+for path in tree.paths(tag_prefix="TAG_"):
+    print(path)
+
+/scratch
+/scratch/library/debian
+/scratch/library/python
+/scratch/library/python/TAG_latest/continuumio/miniconda3
+/scratch/library/python/TAG_latest/continuumio/miniconda3/TAG_latest/singularityhub/containertree
+/scratch/library/python/TAG_latest/continuumio/miniconda3/TAG_latest/singularityhub/singularity-cli
+/scratch/library/python/TAG_latest/continuumio/miniconda3/TAG_1.0/childof/miniconda3
+```
+
+You can ask for only leaf nodes (if you were doing `mkdir -p` this is all you would
+need)
+
+```python
+for path in tree.paths(leaves_only=True):
+    print(path)
+
+/scratch/library/python/.latest/continuumio/miniconda3/.latest/singularityhub/containertree
+/scratch/library/python/.latest/continuumio/miniconda3/.latest/singularityhub/singularity-cli
+/scratch/library/python/.latest/continuumio/miniconda3/.1.0/childof/miniconda3
+```
+
+You can also just get the list:
+
+```python
+paths = tree.get_paths()
+```
+
+For a more advanced example, see the [collection_tree](https://github.com/singularityhub/container-tree/tree/master/examples/collection_tree)
+folder, where we use these functions to build a collection tree (filesystem) in a container,
+and then search over it.

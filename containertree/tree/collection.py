@@ -286,6 +286,7 @@ class CollectionTree(object):
 
 # Loading Functions
 
+
     def load(self, uri, fromuri, tag=None):
         ''' uri must be the uri for a container. fromuri can be a uri OR
             a Dockerfile for the uri given (to extract from)
@@ -423,7 +424,7 @@ class CollectionTree(object):
             nodeImage.children[uriImage['repo_tag']] = []
 
         # Remove the nodeImage from the tree, if it's found
-        self.remove(name = nodeImage.label, tag=uriImage['repo_tag'])
+        self.remove(name = nodeImage.label)
        
         # We now have a nodeFrom and a nodeImage, append nodeImage
         if nodeImage not in nodeFrom.children[uriFrom['repo_tag']]:
@@ -444,12 +445,17 @@ class CollectionTree(object):
 
 # Export Functions
 
-    def paths(self, leaves_only=False):
+    def paths(self, leaves_only=False, 
+                    tags_as_hidden_files=True, 
+                    tag_prefix='.'):
+
         '''Get all paths to nodes, as an iterator
 
            Parameters
            ==========
            leaves_only: only export leaf nodes
+           tags_as_hidden_files: defaults to True
+           tag_prefix: the prefix to give to tag folders (defaults to .)
         '''
 
         def traverse(current, path=''):
@@ -471,9 +477,18 @@ class CollectionTree(object):
             else:
                 for tag, children in current.children.items():
                     for child in children:
-                        for new_path in traverse(child, path):
-                            yield new_path
 
+                        # tags are represented by hidden folders
+                        if tags_as_hidden_files:
+                            new_path = path + '/' + tag_prefix + tag
+
+                        # But if the user doesn't want that detail
+                        else:
+                            new_path = path
+
+                        # Reveal the paths
+                        for new_path in traverse(child, new_path):
+                            yield new_path
 
         for path in traverse(self.root):
             yield path
