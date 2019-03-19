@@ -35,6 +35,6 @@ else:
     tree.update('continuumio/miniconda3', 'library/python')
     
     print('Creating paths...')
-    for path in tree.get_paths(tag_prefix='TAG__', leaves_only=True):
+    for path in tree.get_paths(tag_prefix='tag-', leaves_only=True):
         print('mkdir -p %s' % path)
         os.makedirs(path)
