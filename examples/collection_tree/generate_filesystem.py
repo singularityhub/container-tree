@@ -40,4 +40,4 @@ else:
     
     print('Creating paths...')
     for path in tree.get_paths():
-        os.mkdirs(path)
+        os.makedirs(path)
