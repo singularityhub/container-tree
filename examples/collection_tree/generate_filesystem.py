@@ -28,6 +28,7 @@ else:
     # Initialize a collection tree
     tree = CollectionTree()
     tree.update('continuumio/miniconda3', 'library/debian')
+    tree.update('vanessa/pancakes', 'library/debian')
     tree.update('singularityhub/containertree', 'continuumio/miniconda3')
     tree.update('singularityhub/singularity-cli', 'continuumio/miniconda3')
     tree.update('continuumio/miniconda3:1.0', 'library/debian')
