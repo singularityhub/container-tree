@@ -16,6 +16,7 @@
 
 from containertree import CollectionTree
 import sys
+import os
 
 ################################################################################
 # Generate Collection Tree
