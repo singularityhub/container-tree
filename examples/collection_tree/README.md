@@ -34,6 +34,10 @@ $ docker run -it vanessa/collection-tree-fs
 (base) root@c1e3d68bac93:/scratch# tree
 .
 └── library
+    ├── debian
+    │   └── tag-latest
+    │       └── vanessa
+    │           └── pancakes
     └── python
         └── tag-latest
             └── continuumio
@@ -47,5 +51,22 @@ $ docker run -it vanessa/collection-tree-fs
                             └── singularity-cli
 
 12 directories, 0 files
-(base) root@c1e3d68bac93:/scratch# 
 ```
+
+Now we can have fun! Search for a tag of interest, across all collections.
+
+```bash
+$ find . -name tag-latest
+./library/debian/tag-latest
+./library/python/tag-latest
+./library/python/tag-latest/continuumio/miniconda3/tag-latest
+```
+ 
+Find the singularityhub collection
+
+```bash
+$ find . -name singularityhub
+./library/python/tag-latest/continuumio/miniconda3/tag-latest/singularityhub
+```
+
+We would next want to explore adding metadata to the collection via [xattrs](https://en.wikipedia.org/wiki/Extended_file_attributes#Linux)
