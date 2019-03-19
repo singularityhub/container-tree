@@ -494,14 +494,18 @@ class CollectionTree(object):
             yield path
 
 
-    def get_paths(self, leaves_only=False):
+    def get_paths(self, leaves_only=False, 
+                        tags_as_hidden_files=True,
+                        tag_prefix='.'):
         '''Get all paths to nodes, in a list.
 
            Parameters
            ==========
            leaves_only: only get leaf nodes
         '''
-        return list(self.paths(leaves_only))
+        return list(self.paths(tags_as_hidden_files=tags_as_hidden_files,
+                               leaves_only=leaves_only, 
+                               tag_prefix=tag_prefix))
 
 
     def get_nodes(self):
