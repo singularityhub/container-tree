@@ -105,7 +105,7 @@ class CollectionTree(object):
 
                     # Case 2: we delete the entire node (and all tags)
                     else:
-                        node.children.remove(child)
+                        node.children = [c for c in node.children if c != child]
 
                     # Return the deleted node
                     return child
@@ -131,8 +131,10 @@ class CollectionTree(object):
                                 del child.children[tag]
 
                         # Case 2: we delete the entire node (and all tags) from list
-                        else:
-                            node.children[child_tag].remove(child)
+                        else: 
+                            childs = node.children[child_tag]
+                            childs = [c for c in childs if c != child]
+                            node.children[child_tag] = childs
 
                         # Return the deleted node
                         return child
@@ -161,38 +163,29 @@ class CollectionTree(object):
 
         # Did we find the node?
         if node.label == name:
+
             # if no tag is defined, return the entire node
             if tag == None:
                 return node
+
+            # Unless they want a tag, return the tag
             if tag in node.children:
                 return node
 
-        # Absolutely no children
-        if len(node.children) == 0:
-            return None
+            # Otherwise, we found the node, but not the right tag
+            else:
+                return None
 
-        # Are we at the root?
-        if isinstance(node.children, list):
-            for child in node.children:
-                found_node = self.find(name, tag, child)
-                if found_node != None:
-                    return found_node
-            return None
-
-        # Otherwise (type dict), search children organized by tag
-        for child_tag in node.children:
-            for child in node.children[child_tag]:
-                found_node = self.find(name, tag, child)
-                if found_node != None:
-                    return found_node
-
-        return None
+        # Search through children
+        for child in node.get_children():
+            found_node = self.find(name, tag, child)
+            if found_node != None:
+                return found_node
 
 
-    def search(self, name, number=None, node=None, tag=None):
+    def search(self, name, number=None, node=None, tag=None, exact=False):
         '''find a basename in the tree. If number is defined, return
-           up to that number. 
-           #TODO: need to test this
+           up to that number. If exact is True, only grab exact matches
         '''
         found = []
  
@@ -202,11 +195,24 @@ class CollectionTree(object):
 
         # Look for the name in the current node
         if name in node.label:
+            
             if tag == None:
-                found.append(node)
+
+                # Only add exact matches
+                if exact == True and name == node.label:
+                    found.append(node)
+                elif exact == False:
+                    found.append(node)
             else:
                 if tag in node.children:
-                    found.append(node)
+
+                    # Only add exact matches
+                    if exact == True and name == node.label:
+                        found.append(node)
+
+                    # Allow user to specify name via <collection>/<repo>:<tag>
+                    elif exact == True and name == "%s:%s" % (node.label, tag):
+                        found.append(node)
 
         # No children, no search
         if len(node.children) == 0:
@@ -217,78 +223,56 @@ class CollectionTree(object):
             if len(found) >= number:
                 return found
 
-        # If we are at the root, going over a list
-        if isinstance(node.children, list):
-            for child in node.children:
-                found += self.search(name, number, child, tag)
-                if number != None:
-                    if len(found) >= number:
-                        return found
+        # Recursively search over children
+        for child in node.get_children():
+            found += self.search(name, number, child, tag, exact)
+            if number != None:
+                if len(found) >= number:
+                    return found
 
-        # Otherwise, we have dictionary nodes
-        else:
-            for child_tag in node.children:
-                for child in node.children[child_tag]:
-                    found += self.search(name, number, child, tag)
-                    if number != None:
-                        if len(found) >= number:
-                            return found
         return found           
 
 
-    def trace(self, name, node=None, tag=None):
+    def trace(self, name, node=None):
         '''find a path in the tree and return the node if found.
-           This base function is suited for searches that don't build
-           on themselves (e.g., not filepaths or words)
+            We don't take a tag, assuming that the node returned is unique for
+            the container name, and thus will have any associated tags.
          '''
         if node == None:
             node = self.root
 
         # Find the node, is it in the tree?
-        tracedNode = self.find(name, tag=tag)
+        tracedNode = self.find(name)
 
         # Trace it's path
         if tracedNode != None:
-
-            # If we are dealing with root node, list
-            if isinstance(node.children, list):
-                children = node.children
-
-            # Otherwise, dictionary
-            else:
-                children = []
-                for child_tag in node.children:
-                    children += node.children[child_tag]
-
-            for child in children:
-                traces = self._trace(name, child, tag)
-                if tracedNode in traces:
-                    return [self.root] + traces
+            return self._trace(name, node, tracedNode)
 
 
-    def _trace(self, name, node, tag=None, traces=None):
+    def _trace(self, name, node, targetNode, traces=None):
         '''find a path in the tree and return the node if found.
-           This base function is suited for searches that don't build
-           on themselves (e.g., not filepaths or words)
         '''
         if traces == None:
             traces = []
 
-        # Always add node
+        # Always add node we are searching
         traces.append(node)
 
-        # Did we find a node?
+        # Case 1: the node IS the target node
+        if node == targetNode:
+            return traces
+
+        # Case 2: We found a leaf node, so we need to reset traces
         if node.leaf == True:
-            if node.label == name and tag in node.children:
-                return traces
-            else:
+            return []
+
+        else:
+            for child in node.get_children():
+                traces = self._trace(name, child, targetNode, traces)
+                if targetNode in traces:
+                    return traces
                 traces = []
 
-        # Keep searching over children        
-        for child_tag in node.children:
-            for children in node.children[child_tag]:
-                for child in children:
-                    self._trace(name, child, tag, traces)
         return traces
 
 
@@ -318,12 +302,19 @@ class CollectionTree(object):
             # In future, could support more than one from here
             if len(froms) > 0:
                  
-                # Some containers have "as build, etc."
+                # We can't use any AS statements 
+                if " as " in froms[0].lower():
+                    return None
+
+                # Remove any extra comments, etc. next to FROM <container>
                 fromuri = froms[0].split(' ')[0]
 
                 # Validate the uris
                 for image in [uri, fromuri]:
                     if not parse_image_uri(image):
+                        return None
+                    # Don't allow uppercase or invalid endings
+                    if image.isupper() or re.search('-$', image):
                         return None
 
                 # Don't allow environment vars or similar
@@ -546,24 +537,12 @@ class CollectionTree(object):
         '''an iterator over MultiNodes to yield nodes, one at a time.
         '''
         def traverse(current, seen):
-
-            # The root node will have a list of children
-            if isinstance(current.children, list):
-                for child in current.children:
-                    if child not in seen:
-                        seen.add(child)
+            for child in current.get_children():
+                if child.name not in seen:
+                    seen.add(child.name)
+                    yield child
+                    for child in traverse(child, seen):
                         yield child
-                        for child in traverse(child, seen):
-                            yield child
-
-            # All other nodes are a dictionary
-            else:
-                for child_tag, children in current.children.items():
-                    for child in children:
-                        if child not in seen:
-                            yield child
-                            for child in traverse(child, seen):
-                                yield child
 
         seen = set()
         for node in traverse(self.root, seen):
@@ -619,16 +598,8 @@ class CollectionTree(object):
             else:            
                 nodes['children'].append(new_node)
 
-            # Case 1: We are at the root (and have list)
-            if isinstance(current.children, list):
-                children = current.children
-            else:
-                children = []
-                for tag in current.children:
-                    children += current.children[tag]
-
             # Traverse remainder of children
-            for child in children:
+            for child in current.get_children():
                 traverse(nodes=new_node, current=child)
 
         nodes = dict()

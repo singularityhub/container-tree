@@ -92,7 +92,15 @@ tree.update('singularityhub/singularity-cli', 'continuumio/miniconda3')
 In the above, we see that the first level (off of the root node scratch) is a list.
 After that, the children of a node is a dictionary, with the key being the tag
 for the container, and the value item is the list of children for that particular 
-tag. Now let's see what happens when we add a a different tag:
+tag. We can actually do a trace much easier:
+
+
+```python
+tree.trace('continuumio/miniconda3')
+[Node<scratch>, MultiNode<library/debian>, MultiNode<continuumio/miniconda3>]
+```
+
+Now let's see what happens when we add a a different tag:
 
 ```python
 tree.update('continuumio/miniconda3:1.0', 'library/debian')
@@ -184,9 +192,11 @@ for node in tree:
     print(node)
 
 MultiNode<library/debian>
+MultiNode<library/python>
 MultiNode<continuumio/miniconda3>
 MultiNode<singularityhub/containertree>
 MultiNode<singularityhub/singularity-cli>
+MultiNode<childof/miniconda3>
 ```
 
 ## Find an Exact Node
@@ -253,11 +263,11 @@ We can use an iterator to go over the nodes:
 for node in tree:
     print(node)
 
-MultiNode<library/debian>,
-MultiNode<library/python>,
-MultiNode<continuumio/miniconda3>,
-MultiNode<singularityhub/containertree>,
-MultiNode<singularityhub/singularity-cli>,
+MultiNode<library/debian>
+MultiNode<library/python>
+MultiNode<continuumio/miniconda3>
+MultiNode<singularityhub/containertree>
+MultiNode<singularityhub/singularity-cli>
 MultiNode<childof/miniconda3>
 ```
 
@@ -333,7 +343,8 @@ See the link in the previous section to see how it was built. To shell into the 
 $ docker run -it vanessa/collection-tree-fs
 ```
 
-The working directory is scratch, the root of the filesystem tree.
+The working directory is scratch, the root of the filesystem tree (this
+is a smaller example of what you will see):
 
 ```bash
 (base) root@c1e3d68bac93:/scratch# tree
@@ -386,6 +397,11 @@ the filesystem:
 # List attributes for the library/debian folder (a count for that collection)
 (base) root@f379adcb3cb7:/scratch# attr -l library/debian/
 Attribute "count" has a 3 byte value for library/debian/
+
+# Get the count
+(base) root@f379adcb3cb7:/scratch# attr -g count library/debian/
+Attribute "count" has a 3 byte value for library/debian/
+3
 ```
 
 If you wanted, you could easily set another attribute, some metadata of interest for the collection:
@@ -414,6 +430,3 @@ vanessasaur
 ```
 
 How awesomely wicked cool is this! We can put metadata with out files.
-
-
-

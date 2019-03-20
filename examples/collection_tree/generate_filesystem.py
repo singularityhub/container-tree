@@ -21,14 +21,16 @@ import sys
 import os
 
 
+# Option 1: Load a tree provided by the user
 if os.path.exists('/tree.pkl'):
     tree = pickle.load(open('/tree.pkl','rb'))
 
+
+# Option 2: build a dummy one
 else:
 
     print('Add /tree.pkl to load tree from pickle. Creating dummy example.')
 
-    # Initialize a collection tree
     tree = CollectionTree()
     tree.update('continuumio/miniconda3', 'library/debian')
     tree.update('vanessa/pancakes', 'library/debian')
@@ -50,5 +52,5 @@ for node in tree.get_nodes():
         os.makedirs(path)
    
     # Create the attribute for the counter - the number of times the node was added as parent or child
-    #attribute = xattr.xattr(path)
-    #attribute['user.count'] = bytes(node.counter)
+    attribute = xattr.xattr(path)
+    attribute['user.count'] = bytes(node.counter)
