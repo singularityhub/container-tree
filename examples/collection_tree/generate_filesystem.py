@@ -38,6 +38,17 @@ else:
     tree.update('childof/miniconda3','continuumio/miniconda3:1.0')
     tree.update('continuumio/miniconda3', 'library/python')
     
+
 print('Creating paths and adding count metadata...')
-for path in tree.get_paths(tag_prefix='tag-', leaves_only=True):
+
+# Since we want to get the count of nodes, we will ask for paths based on the node name
+for node in tree.get_nodes():
+    path = tree.get_paths(label=node.name)[0]
     print('mkdir -p %s' % path)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+   
+    # Create the attribute for the counter - the number of times the node was added as parent or child
+    attribute = xattr.xattr(path)
+    attribute['user.count'] = bytes(node.counter)

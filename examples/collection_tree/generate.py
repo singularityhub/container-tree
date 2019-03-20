@@ -16,10 +16,6 @@
 
 from containertree import CollectionTree
 from containertree.utils import recursive_find
-from random import choice
-from copy import deepcopy
-import requests
-import tempfile
 import pickle
 import os
 
