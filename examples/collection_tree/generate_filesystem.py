@@ -21,12 +21,12 @@ import sys
 import os
 
 
-if os.path.exists('/container-collection-tree-final.pkl'):
-    tree = pickle.load(open('/container-collection-tree-final.pkl','rb'))
+if os.path.exists('/tree.pkl'):
+    tree = pickle.load(open('/tree.pkl','rb'))
 
 else:
 
-    print('Add /container-collection-tree-final.pkl, creating dummy example.')
+    print('Add /tree.pkl to load tree from pickle. Creating dummy example.')
 
     # Initialize a collection tree
     tree = CollectionTree()

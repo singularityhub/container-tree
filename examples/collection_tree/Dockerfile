@@ -1,5 +1,8 @@
 FROM continuumio/miniconda3
 
+# docker build -t vanessa/collection-tree-fs .
+# docker push vanessa/collection-tree-fs
+
 RUN apt-get update && \
     apt-get install -y git \
                        tree \
@@ -10,6 +13,7 @@ RUN apt-get update && \
     python setup.py install && \
     pip install xattr && \
     cd examples/collection_tree && \
+    mv container-collection-tree-final.pkl /tree.pkl && \
     python generate_filesystem.py
 
 WORKDIR /scratch
