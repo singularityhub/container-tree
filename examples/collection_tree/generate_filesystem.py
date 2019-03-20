@@ -15,16 +15,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from containertree import CollectionTree
+import pickle
 import xattr
 import sys
 import os
 
 
-if not os.path.exists('/container-collection-tree-final.pkl'):
-    print('Add /container-collection-tree-final.pkl, creating dummy example.')
+if os.path.exists('/container-collection-tree-final.pkl'):
     tree = pickle.load(open('/container-collection-tree-final.pkl','rb'))
 
 else:
+
+    print('Add /container-collection-tree-final.pkl, creating dummy example.')
 
     # Initialize a collection tree
     tree = CollectionTree()
