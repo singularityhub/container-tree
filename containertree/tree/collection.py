@@ -496,7 +496,7 @@ class CollectionTree(object):
                     for child in children:
 
                         # tags are represented by hidden folders
-                        if tags_as_hidden_files:
+                        if add_tags:
                             new_path = path + '/' + tag_prefix + tag
 
                         # But if the user doesn't want that detail
