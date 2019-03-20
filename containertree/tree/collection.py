@@ -34,7 +34,6 @@ from .loading import (
     _update
 )
 
-
 class CollectionTree(object):
 
     def __init__(self, inputs=None, tag=None, first_level='library'):
@@ -250,12 +249,21 @@ class CollectionTree(object):
 
         # Trace it's path
         if tracedNode != None:
-            for child_tag in node.children:
-                children = node.children[child_tag]
-                for child in children:
-                    traces = self._trace(name, child, tag)
-                    if tracedNode in traces:
-                        return [self.root] + traces
+
+            # If we are dealing with root node, list
+            if isinstance(node.children, list):
+                children = node.children
+
+            # Otherwise, dictionary
+            else:
+                children = []
+                for child_tag in node.children:
+                    children += node.children[child_tag]
+
+            for child in children:
+                traces = self._trace(name, child, tag)
+                if tracedNode in traces:
+                    return [self.root] + traces
 
 
     def _trace(self, name, node, tag=None, traces=None):
@@ -446,31 +454,40 @@ class CollectionTree(object):
 # Export Functions
 
     def paths(self, leaves_only=False, 
-                    tags_as_hidden_files=True, 
-                    tag_prefix='.'):
+                    add_tags=True, 
+                    tag_prefix='.',
+                    label=None):
 
         '''Get all paths to nodes, as an iterator
 
            Parameters
            ==========
-           leaves_only: only export leaf nodes
-           tags_as_hidden_files: defaults to True
-           tag_prefix: the prefix to give to tag folders (defaults to .)
+           leaves_only: only get leaf nodes
+           add_tags: add tags to tree (also as folders)
+           tag_prefix: if adding tags, use this prefix.
+           label: get the path for one (string) or more (list) nodes.
         '''
 
-        def traverse(current, path=''):
+        def traverse(current, path='', label=None):
 
             # Update the path with the current
             path = path + '/' + current.name
 
             # Does the user want to export leaves only?
             if (leaves_only and current.leaf) or not leaves_only:
-                yield path
+
+                # Does the user only want specific label(s)?
+                if label != None:
+                    if current.name in label:
+                        label.remove(current.name)
+                        yield path
+                else:
+                    yield path
 
             # Case 1: We are at the root (and have list)
             if isinstance(current.children, list):
                 for child in current.children:
-                    for new_path in traverse(child, path):
+                    for new_path in traverse(child, path, label):
                         yield new_path
 
             # Case 2: we have a dictionary
@@ -487,25 +504,36 @@ class CollectionTree(object):
                             new_path = path
 
                         # Reveal the paths
-                        for new_path in traverse(child, new_path):
+                        for new_path in traverse(child, new_path, label):
                             yield new_path
 
-        for path in traverse(self.root):
+        # Does the user want a particular set of labels?
+        if label != None:
+            if not isinstance(label, list):
+                label = [label]
+
+            # Create a set for more efficient lookup
+            label = set(label)
+
+        for path in traverse(self.root, label=label):
             yield path
 
 
-    def get_paths(self, leaves_only=False, 
-                        tags_as_hidden_files=True,
-                        tag_prefix='.'):
+    def get_paths(self, leaves_only=False, add_tags=True, tag_prefix='.', label=None):
+
         '''Get all paths to nodes, in a list.
 
            Parameters
            ==========
            leaves_only: only get leaf nodes
+           add_tags: add tags to tree (also as folders)
+           tag_prefix: if adding tags, use this prefix.
+           label: get the path for one (string) or more (list) nodes.
         '''
-        return list(self.paths(tags_as_hidden_files=tags_as_hidden_files,
+        return list(self.paths(add_tags=add_tags,
                                leaves_only=leaves_only, 
-                               tag_prefix=tag_prefix))
+                               tag_prefix=tag_prefix,
+                               label=label))
 
 
     def get_nodes(self):

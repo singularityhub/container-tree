@@ -56,8 +56,8 @@ len(pairs)
 ################################################################################
 
 
-if os.path.exists('container-collection-tree.pkl'):
-    tree = pickle.load(open('container-collection-tree.pkl','rb'))
+if os.path.exists('container-collection-tree-final.pkl'):
+    tree = pickle.load(open('container-collection-tree-final.pkl','rb'))
 else:
     tree = CollectionTree()
 
@@ -85,4 +85,4 @@ else:
         tree.update(uri=pair[0], fromuri=pair[1])
 
     # Save final tree
-    pickle.dump(tree, open('container-collection-tree.pkl','wb'))
+    pickle.dump(tree, open('container-collection-tree-final.pkl','wb'))
