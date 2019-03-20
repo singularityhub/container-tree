@@ -326,20 +326,16 @@ directly to the folders in the filesystem.
 
 ### Collection Tree Filesystem Metadata
 
-We have provided a [collection tree filesystem]() in a container for you to explore and interact with.
-
-## TODO: need to update data structures, push container
-
-You can build the container:
-
-```bash
-docker build -t vanessa/collection-tree-fs .
-```
-
-And then shell inside to see the filesystem tree:
+We have provided a [collection tree filesystem](http://hub.docker.com/r/vanessa/collection-tree-fs) in a container for you to explore and interact with.
+See the link in the previous section to see how it was built. To shell into the container directly:
 
 ```bash
 $ docker run -it vanessa/collection-tree-fs
+```
+
+The working directory is scratch, the root of the filesystem tree.
+
+```bash
 (base) root@c1e3d68bac93:/scratch# tree
 .
 └── library

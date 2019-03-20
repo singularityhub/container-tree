@@ -50,5 +50,5 @@ for node in tree.get_nodes():
         os.makedirs(path)
    
     # Create the attribute for the counter - the number of times the node was added as parent or child
-    attribute = xattr.xattr(path)
-    attribute['user.count'] = bytes(node.counter)
+    #attribute = xattr.xattr(path)
+    #attribute['user.count'] = bytes(node.counter)
