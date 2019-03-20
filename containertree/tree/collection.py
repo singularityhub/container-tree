@@ -545,24 +545,28 @@ class CollectionTree(object):
     def __iter__(self):
         '''an iterator over MultiNodes to yield nodes, one at a time.
         '''
-        def traverse(current):
+        def traverse(current, seen):
 
             # The root node will have a list of children
             if isinstance(current.children, list):
                 for child in current.children:
-                    yield child
-                    for child in traverse(child):
+                    if child not in seen:
+                        seen.add(child)
                         yield child
+                        for child in traverse(child, seen):
+                            yield child
 
             # All other nodes are a dictionary
             else:
                 for child_tag, children in current.children.items():
                     for child in children:
-                        yield child
-                        for child in traverse(child):
+                        if child not in seen:
                             yield child
+                            for child in traverse(child, seen):
+                                yield child
 
-        for node in traverse(self.root):
+        seen = set()
+        for node in traverse(self.root, seen):
             yield node  
 
 
