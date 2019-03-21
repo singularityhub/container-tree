@@ -1,5 +1,6 @@
 # Container Tree
 
+[![DOI](https://zenodo.org/badge/134179762.svg)](https://zenodo.org/badge/latestdoi/134179762)
 [![CircleCI](https://circleci.com/gh/singularityhub/container-tree.svg?style=svg)](https://circleci.com/gh/singularityhub/container-tree)
 
 This is a library that demonstrates different methods to build container trees. 
@@ -16,7 +17,6 @@ using them! Learn more by reading the documentation, or follow links to related 
 
 If you want to jump in, check out how to create a [Container File Tree](https://singularityhub.github.io/container-tree/pages/demo/tree/) as shown [here](https://vsoch.github.io/containertree).
 
-
 # Visualizations
 
 These are under development! Here are some quick examples:
@@ -27,6 +27,7 @@ These are under development! Here are some quick examples:
  - [Files Tree](https://singularityhub.github.io/container-tree/pages/demo/files_tree/)
  - [Shub Tree](https://singularityhub.github.io/container-tree/pages/demo/shub_tree/)
  - [Heatmap](https://singularityhub.github.io/container-tree/pages/demo/heatmap/)
+
 
 # Github Actions
 
