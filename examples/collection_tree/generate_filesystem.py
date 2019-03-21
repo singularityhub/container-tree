@@ -16,7 +16,6 @@
 
 from containertree import CollectionTree
 import pickle
-import xattr
 import sys
 import os
 
@@ -49,6 +48,8 @@ for node in tree.get_nodes():
     if not os.path.exists(path):
         os.makedirs(path)
    
+    # If you want to add attributes, here is how you do it
     # Create the attribute for the counter - the number of times the node was added as parent or child
-    attribute = xattr.xattr(path)
-    attribute['user.count'] = bytes(node.counter)
+    # import xattr
+    # attribute = xattr.xattr(path)
+    # attribute['user.count'] = bytes(node.counter)
