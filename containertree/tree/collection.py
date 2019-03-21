@@ -426,6 +426,8 @@ class CollectionTree(object):
                     weren't able to be added to the tree because of not having
                     a connection to the root.
         '''
+        added = False
+
         # Parse the uri to get namespace, and rest
         uriImage = parse_image_uri(uri)
         uriFrom = parse_image_uri(fromuri)        
@@ -487,9 +489,6 @@ class CollectionTree(object):
             if nodeImage not in nodeFrom.children and nodeImage.label.startswith(self._first_level):
                 nodeFrom.children.append(nodeImage)    
                 added = True
-
-            # We couldn't add it
-            added = False        
 
         else:
 

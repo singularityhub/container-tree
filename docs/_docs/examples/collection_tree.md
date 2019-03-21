@@ -29,18 +29,20 @@ tree.update('scratch', 'library/ubuntu')
 # [MultiNode<library/ubuntu>]
 ```
 
-but you can't do this - the child "continuumio/miniconda3" since it's parent
-isn't in the library, and it's already in the tree, it won't be added.
+You'll also notice that the update function returns a boolean (True) to indicate
+that the container was added and/or created. What if we try to add a child that doesn't have
+a parent in the library, and the parent isn't already part of some subtree?
 
 ```python
 tree.update('singularityhub/sregistry-cli', 'continuumio/miniconda3')
 
+# False
 # tree.root.children is still only library/ubuntu
 # [MultiNode<library/ubuntu>]
 ```
 
-But if you don't want to limit your first level of your tree to library, you can
-disable it entirely like this:
+False is returned because we didn't add the container. But if you don't want to limit your 
+first level of your tree to library, you can disable it entirely like this:
 
 ```python
 tree = CollectionTree(first_level='')
@@ -236,7 +238,6 @@ MultiNode<continuumio/miniconda3>
 ```
 
 The function will still return the entire node, but the tag will be removed.
-
 
 ## Collection Tree Filesystems
 
