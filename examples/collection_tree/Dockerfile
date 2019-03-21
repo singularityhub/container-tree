@@ -3,6 +3,7 @@ FROM continuumio/miniconda3
 # docker build -t vanessa/collection-tree-fs .
 # docker push vanessa/collection-tree-fs
 
+ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y git \
                        tree \

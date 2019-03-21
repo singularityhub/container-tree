@@ -23,8 +23,8 @@ import os
 
 # Option 1: Load a tree provided by the user
 if os.path.exists('/tree.pkl'):
+    print('Loading /tree.pkl')
     tree = pickle.load(open('/tree.pkl','rb'))
-
 
 # Option 2: build a dummy one
 else:
