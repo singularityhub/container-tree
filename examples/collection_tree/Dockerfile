@@ -13,7 +13,7 @@ RUN apt-get update && \
     python setup.py install && \
     pip install xattr && \
     cd examples/collection_tree && \
-    mv container-collection-tree-final.pkl /tree.pkl && \
+    mv container-collection-tree-library-only.pkl /tree.pkl && \
     python generate_filesystem.py
 
 WORKDIR /scratch

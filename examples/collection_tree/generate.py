@@ -68,7 +68,7 @@ else:
     pickle.dump(tree, open('container-collection-tree-library-only.pkl','wb'))
 
     len(tree.root.children)
-    # 184
+    # 177
 
     # Now add nodes onto library
     for pair in pairs:

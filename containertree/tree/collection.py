@@ -53,10 +53,13 @@ class CollectionTree(object):
         self.root = Node('scratch', {'size': 0, 'Name': 'scratch'}, tag=None)
         self.data = None
         self._first_level = first_level
-         
+
         # Count the nodes
         self.count = 1
-        
+
+        # Keep an index of all nodes
+        self._index = {'scratch': ''}     
+
         # Sets self.data and builds self.tree
         if inputs != None:
             self.load(inputs)
@@ -108,6 +111,7 @@ class CollectionTree(object):
                         node.children = [c for c in node.children if c != child]
 
                     # Return the deleted node
+                    self.count -= 1
                     return child
                 
                 # If we don't find the node, look for it in child
@@ -137,6 +141,7 @@ class CollectionTree(object):
                             node.children[child_tag] = childs
 
                         # Return the deleted node
+                        self.count -= 1
                         return child
                   
                     # If we don't find the node, look for it in child
@@ -156,10 +161,13 @@ class CollectionTree(object):
            specifies a tag, return the node only if the tag is included.
            For addition of a new tag to a node, leave the tag blank to
            return the general collection node (and then add it)
-         '''
-
+        '''
+        # Only do index search if started from root
         if node == None:
             node = self.root
+            found = self._find(name, tag, node)
+            if found != None:
+                return found
 
         # Did we find the node?
         if node.label == name:
@@ -175,13 +183,39 @@ class CollectionTree(object):
             # Otherwise, we found the node, but not the right tag
             else:
                 return None
-
+              
         # Search through children
         for child in node.get_children():
             found_node = self.find(name, tag, child)
             if found_node != None:
                 return found_node
 
+
+    def _find(self, name, tag, node):
+        '''a helper to find that tries finding with the index first.
+        '''
+        found = None
+
+        # Otherwise, check the index for the node
+        if name in self._index:
+            lookup = self._index[name].split('|')
+
+            # Pop the root node
+            lookup.pop(0)
+            children = self.root.children
+
+            while lookup:
+                childname = lookup.pop(0)
+                childtag = lookup.pop(0)
+
+                node = [x for x in children if x.name == childname][0]
+                children = node.children[childtag]
+ 
+            for found in children:
+                if found.name == name:
+                    return found               
+
+        return found
 
     def search(self, name, number=None, node=None, tag=None, exact=False):
         '''find a basename in the tree. If number is defined, return
@@ -351,9 +385,9 @@ class CollectionTree(object):
         # Loads {"Image": ... "From": ...}, unless Dockerfile not found
         data = self._load(uri, fromuri)
 
-        # If we have loaded data, continue
+        # If we have loaded data, continue, returns True if nodes created/added
         if data:
-            self._make_tree(data['Image'], data['From'], tag=tag)
+            return self._make_tree(data['Image'], data['From'], tag=tag)
 
 
 # Tree Generation
@@ -384,6 +418,13 @@ class CollectionTree(object):
            uri: the container uri to add
            fromuri: the from uri (the parent of the container, or it's base)
            tag: if defined, a tag to give the node (not the container tag)
+
+           Returns
+           =======
+           created: boolean to indicate if the nodes were created and/or added.
+                    This boolean should be used to keep track of pairs that
+                    weren't able to be added to the tree because of not having
+                    a connection to the root.
         '''
         # Parse the uri to get namespace, and rest
         uriImage = parse_image_uri(uri)
@@ -391,11 +432,19 @@ class CollectionTree(object):
 
         # Update uri and fromuri
         uri = uriImage['nodeUri']
-        fromuri = uriFrom['nodeUri']
+
+        # Special case of scratch
+        if fromuri != 'scratch':
+            fromuri = uriFrom['nodeUri']
 
         # Find the node in the tree, if it exists (the uri without tag/version)
         nodeImage = self.find(uri)
         nodeFrom = self.find(fromuri) 
+
+        # If they both exist, do nothing.
+        if nodeImage != None and nodeFrom != None:
+            nodeImage.counter +=1
+            return True
 
         # Boolean to indicate add to root
         append_root = False
@@ -404,17 +453,17 @@ class CollectionTree(object):
         if nodeFrom == None:
             nodeFrom = MultiNode(fromuri, {"Name": fromuri })
             append_root = True
-        else:
-            nodeFrom.counter += 1
 
         # If the tag isn't there, add it (this is the parent)
-        if uriFrom['repo_tag'] not in nodeFrom.children:
-            nodeFrom.children[uriFrom['repo_tag']] = []
+        if isinstance(nodeFrom.children, dict):
+            if uriFrom['repo_tag'] not in nodeFrom.children:
+                nodeFrom.children[uriFrom['repo_tag']] = []
 
         # If node Image isn't in tree, create it
         if nodeImage == None:
             nodeImage = MultiNode(uri, {"Name": uri })
             nodeImage.leaf = True
+            self.count += 1
         else:
             nodeImage.counter += 1
 
@@ -424,22 +473,49 @@ class CollectionTree(object):
 
         # Remove the nodeImage from the tree, if it's found
         self.remove(name = nodeImage.label)
-       
-        # We now have a nodeFrom and a nodeImage, append nodeImage
-        if nodeImage not in nodeFrom.children[uriFrom['repo_tag']]:
-            nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
 
-        # If it was a leaf, no longer is
-        nodeFrom.leaf = False
-
-        # We only append library to the root.
-        if append_root is True and nodeFrom.label.startswith(self._first_level):
-            if nodeFrom not in self.root.children:
-                self.root.children.append(nodeFrom)
-
+        # Add the tag, if defined (this is not the uri tag, but another)
         if tag is not None:
             if tag not in nodeImage.tags:
                 nodeImage.tags.add(tag)
+       
+        # Special case for the root node, update the lookup and add first level
+        if nodeFrom == self.root:
+            self._index[nodeImage.name] = self._index[nodeFrom.name]
+
+            # The image isn't in root's children, but we can add it there!
+            if nodeImage not in nodeFrom.children and nodeImage.label.startswith(self._first_level):
+                nodeFrom.children.append(nodeImage)    
+                added = True
+
+            # We couldn't add it
+            added = False        
+
+        else:
+
+            # We now have a nodeFrom and a nodeImage, we can append        
+            if nodeImage not in nodeFrom.children[uriFrom['repo_tag']]:
+                nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+
+            # We only append library to the root.
+            if append_root is True and nodeFrom.label.startswith(self._first_level):
+
+                # If adding to the root, we likely don't have the parent node
+                if nodeFrom.name not in self._index:
+                    self._index[nodeFrom.name] = self._index[self.root.name]
+
+                self._index[nodeImage.name] = '%s|%s|%s' %(self._index[nodeFrom.name],
+                                                           nodeFrom.name,
+                                                           uriFrom['repo_tag'])
+
+                if nodeFrom not in self.root.children:
+                    self.root.children.append(nodeFrom)
+                
+                added = True
+
+        # If it was a leaf, no longer is
+        nodeFrom.leaf = False
+        return added
 
 
 # Export Functions
