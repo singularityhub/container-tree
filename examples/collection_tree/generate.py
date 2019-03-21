@@ -16,10 +16,6 @@
 
 from containertree import CollectionTree
 from containertree.utils import recursive_find
-from random import choice
-from copy import deepcopy
-import requests
-import tempfile
 import pickle
 import os
 
@@ -56,8 +52,8 @@ len(pairs)
 ################################################################################
 
 
-if os.path.exists('container-collection-tree.pkl'):
-    tree = pickle.load(open('container-collection-tree.pkl','rb'))
+if os.path.exists('container-collection-tree-final.pkl'):
+    tree = pickle.load(open('container-collection-tree-final.pkl','rb'))
 else:
     tree = CollectionTree()
 
@@ -72,11 +68,17 @@ else:
     pickle.dump(tree, open('container-collection-tree-library-only.pkl','wb'))
 
     len(tree.root.children)
-    # 184
+    # 177
 
     # Now add nodes onto library
     for pair in pairs:
         tree.update(uri=pair[0], fromuri=pair[1])
 
-    # Save final tree
     pickle.dump(tree, open('container-collection-tree.pkl','wb'))
+
+
+    for pair in pairs:
+        tree.update(uri=pair[0], fromuri=pair[1])
+
+    # Save final tree
+    pickle.dump(tree, open('container-collection-tree-final.pkl','wb'))

@@ -90,6 +90,13 @@ class Node(object):
         for name, value in attrs.items():
             self.__setattr__(name.lower(), value)
 
+    def get_children(self):
+        '''a helper function to get children for a node. This is an iterator,
+           if the list is large enough to warrant it.
+        '''
+        for child in self.children:
+            yield child
+
 
 class MultiNode(Node):
     '''a MultiNode is intended to hold multiple sets of children, indexed by
@@ -106,3 +113,14 @@ class MultiNode(Node):
         return "MultiNode<%s>" % self.label
     def __repr__(self):
         return "MultiNode<%s>" % self.label
+
+    def get_children(self):
+        '''a helper function to get children for a node. This helps the user
+           because the we need to loop over a dictionary. This isn't an iterator
+           because it's expected that a node have a reasonably small number
+           of children.
+        '''
+        children = []
+        for child_tag in self.children:
+            for child in self.children[child_tag]:
+                yield child
