@@ -42,6 +42,6 @@ else:
 
 print('Creating paths...')
 
-for path in tree.paths(leaves_only=True):
+for path in tree.paths(leaves_only=True, tag_prefix='tag-'):
     if not os.path.exists(path):
         os.makedirs(path)

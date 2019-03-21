@@ -20,7 +20,6 @@ loaded.
  - [Dockerfile](Dockerfile): is the Dockerfile to build the filesystem using:
  - [generate_filesystem.py](generate_filesystem.py): loads the tree and creates the subfolders in the container
 
-
 You can build the container:
 
 ```bash
