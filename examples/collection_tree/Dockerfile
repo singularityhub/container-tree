@@ -12,7 +12,9 @@ RUN apt-get update && \
     cd container-tree && \
     python setup.py install && \
     cd examples/collection_tree && \
-    mv container-collection-tree-library-only.pkl /tree.pkl && \
+    mv container-collection-tree-final.pkl /tree.pkl
+
+RUN chmod u+x generate_filesystem.py && \
     python generate_filesystem.py
 
 WORKDIR /scratch
