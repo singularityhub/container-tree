@@ -46,8 +46,6 @@ print('Creating paths and adding count metadata...')
 # Since we want to get the count of nodes, we will ask for paths based on the node name
 for node in tree.get_nodes():
     path = tree.get_paths(label=node.name)[0]
-    print('mkdir -p %s' % path)
-
     if not os.path.exists(path):
         os.makedirs(path)
    
