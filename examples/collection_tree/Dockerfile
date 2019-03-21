@@ -14,7 +14,8 @@ RUN apt-get update && \
     cd examples/collection_tree && \
     mv container-collection-tree-final.pkl /tree.pkl
 
-RUN chmod u+x generate_filesystem.py && \
+RUN cd /container-tree/examples/collection_tree && \
+    chmod u+x generate_filesystem.py && \
     python generate_filesystem.py
 
 WORKDIR /scratch

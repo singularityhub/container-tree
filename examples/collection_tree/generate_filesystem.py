@@ -42,11 +42,6 @@ else:
 
 print('Creating paths...')
 
-count = 0
-total = len(tree.get_nodes())
 for path in tree.paths(leaves_only=True):
     if not os.path.exists(path):
-        count+=1
         os.makedirs(path)
-        if count % 1000 == 0:
-            print('%s of %s' %(count, total))
