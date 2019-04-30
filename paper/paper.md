@@ -21,7 +21,7 @@ Container technology is the unit of operation to ensure everything from scientif
 However, despite this growing popularity, the actual study of containers, including inheritance structures, packaging, and filesystems, is a new problem that has not been addressed. 
 Arguably, a reason for this lack of study comes down to missing software that can represent such structures. 
 While container registries exist like Docker [@Merkel2014-da] Hub, Quay.io, and Singularity Hub [@Sochat2017-ud], their search functionality is limited in the detail they are able to provide, and their purpose is not to directly serve scientific pursuit. 
-Here I present software, [Container Tree](https://singularityhub.github.io/container-tree/) that provides data structures well suited to directly study the inheritance, packaging, and filesystems of containers.
+Here I present software, [Container Tree](https://singularityhub.github.io/container-tree/) that provides data structures well suited to directly study the inheritance, packaging, and filesystems of containers. Complete documentation and code is available [@container-tree].
 
 ## Container File Trees
 
@@ -44,8 +44,7 @@ containers to create a package tree. The package trees are ideal data structures
 to store a representation of packages across containers. From the container Apt or Pip 
 tree the user can easily compare containers based on packages within, or export a feature matrix
 with containers (rows) by packages (columns). A [tutorial](https://singularityhub.github.io/container-tree/examples/package_tree/) 
-is also available, and a more extensive analysis using these data structures is planned
-for submission for publication elsewhere.
+is available for the interested user.
 
 ## Collection Trees
 
