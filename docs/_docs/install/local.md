@@ -21,7 +21,7 @@ If you are updating, it's helpful to issue this command until you see it's no
 longer installed:
 
 ```bash
-pip uninstall sif
+pip uninstall {{ site.reponame }}
 ```
 
 Then install with python!
