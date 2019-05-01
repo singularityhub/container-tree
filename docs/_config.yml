@@ -19,7 +19,7 @@ social:
 
 # The current hosting location of the docs
 repo: singularityhub/container-tree
-reponame: sif
+reponame: container-tree
 
 # The current Docker container
 docker: singularityhub/container-tree
