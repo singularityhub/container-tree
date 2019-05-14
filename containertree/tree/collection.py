@@ -421,12 +421,13 @@ class CollectionTree(object):
 
            Returns
            =======
-           created: boolean to indicate if the nodes were created and/or added.
+           present: boolean to indicate if the nodes exist, typically meaning
+                    they were created, added, or already found.
                     This boolean should be used to keep track of pairs that
                     weren't able to be added to the tree because of not having
                     a connection to the root.
         '''
-        added = False
+        present = False
 
         # Parse the uri to get namespace, and rest
         uriImage = parse_image_uri(uri)
@@ -443,9 +444,19 @@ class CollectionTree(object):
         nodeImage = self.find(uri)
         nodeFrom = self.find(fromuri) 
 
-        # If they both exist, do nothing.
+        # If they both exist, and are added correctly, do nothing.
         if nodeImage != None and nodeFrom != None:
-            nodeImage.counter +=1
+
+            # Only return already present if found with exact tag/parent
+            if uriImage['repo_tag'] in nodeFrom.children:
+                if nodeImage in nodeFrom.children[uriImage['repo_tag']]: 
+
+                    # Ensure we have the child tag
+                    if uriImage['repo_tag'] not in nodeImage.children:
+                        nodeImage.children[uriImage['repo_tag']] = []
+                    nodeImage.counter +=1
+
+            # True indicates present in tree
             return True
 
         # Boolean to indicate add to root
@@ -488,13 +499,14 @@ class CollectionTree(object):
             # The image isn't in root's children, but we can add it there!
             if nodeImage not in nodeFrom.children and nodeImage.label.startswith(self._first_level):
                 nodeFrom.children.append(nodeImage)    
-                added = True
+                present = True
 
         else:
 
             # We now have a nodeFrom and a nodeImage, we can append        
             if nodeImage not in nodeFrom.children[uriFrom['repo_tag']]:
                 nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+                present = True
 
             # We only append library to the root.
             if append_root is True and nodeFrom.label.startswith(self._first_level):
@@ -510,11 +522,11 @@ class CollectionTree(object):
                 if nodeFrom not in self.root.children:
                     self.root.children.append(nodeFrom)
                 
-                added = True
+                present = True
 
         # If it was a leaf, no longer is
         nodeFrom.leaf = False
-        return added
+        return present
 
 
 # Export Functions

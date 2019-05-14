@@ -55,12 +55,49 @@ def read_json(filename, mode='r'):
     return data
 
 
+def write_json(json_obj, filename, mode="w", print_pretty=True):
+    ''' write_json will (optionally,pretty print) a json object to file
+    
+        Parameters
+        ==========
+        json_obj: the dict to print to json
+        filename: the output file to write to
+        pretty_print: if True, will use nicer formatting
+    '''
+    with open(filename, mode) as filey:
+        if print_pretty:
+            filey.writelines(print_json(json_obj))
+        else:
+            filey.writelines(json.dumps(json_obj))
+    return filename
+
+
+def write_file(filename, content, mode="w"):
+    '''write_file will open a file, "filename" and write content, "content"
+        and properly close the file
+    '''
+    with open(filename, mode) as filey:
+        filey.writelines(content)
+    return filename
+
+
 def read_file(filename, mode='r'):
     '''read_text file and return string of content
     '''
     with open(filename, mode) as filey:
         content = filey.read()
     return content
+
+
+def print_json(json_obj):
+    ''' just dump the json in a "pretty print" format
+    '''
+    return json.dumps(
+                    json_obj,
+                    indent=4,
+                    separators=(
+                        ',',
+                        ': '))
 
 
 def get_template(name):
