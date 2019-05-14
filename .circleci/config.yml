@@ -62,7 +62,7 @@ workflows:
 
 
 
-install_containeriff: &install_containerdiff
+install_containerdiff: &install_containerdiff
   name: Install container-diff
   command: |
         if [ ! -x "$(which container-diff)" ] ; then
@@ -125,7 +125,7 @@ jobs:
           keys:
           - v1-dependencies
       - run: *install_python_3
-      - run: *install_containeriff
+      - run: *install_containerdiff
       - run: *install
       - save_cache:
           paths:
@@ -142,7 +142,7 @@ jobs:
           keys:
           - v1-dependencies
       - run: *install_python_2
-      - run: *install_containeriff
+      - run: *install_containerdiff
       - run: *install
       - save_cache:
           paths:
