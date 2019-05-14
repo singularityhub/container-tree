@@ -113,7 +113,7 @@ test_containertree: &test_containertree
         python --version
         cd ~/repo/containertree/tests
         $HOME/conda/bin/python -m unittest test_utils
-        $HOME/conda/bin/python -m unittest test_client
+        $HOME/conda/bin/python -m unittest test_collection
 
 jobs:
   test-python-3:
