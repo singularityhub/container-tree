@@ -73,7 +73,7 @@ install_containerdiff: &install_containerdiff
         fi
         export PATH=$HOME/conda/bin:$PATH
         echo "Container-Diff Installed"
-        container-diff --version
+        container-diff version
 
 install: &install
   name: install containertree
