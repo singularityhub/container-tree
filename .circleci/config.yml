@@ -69,7 +69,7 @@ install_containerdiff: &install_containerdiff
             echo "Container diff not found on PATH! Downloading to /tmp"
             curl -LO https://storage.googleapis.com/container-diff/latest/container-diff-linux-amd64
             chmod +x container-diff-linux-amd64
-            mv container-diff-linux-amd64 $HOME/conda/bin
+            mv container-diff-linux-amd64 $HOME/conda/bin/container-diff
         fi
         echo "Container-Diff Installed"
         container-diff --version
