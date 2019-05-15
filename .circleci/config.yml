@@ -89,6 +89,7 @@ install_python_3: &install_python_3
           wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
           /bin/bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/conda
           export PATH=$HOME/conda/bin:$PATH
+          $HOME/conda/bin/conda install pandas
           $HOME/conda/bin/python setup.py install
        else
            echo "Miniconda 3 is already installed, continuing to build."
@@ -101,6 +102,7 @@ install_python_2: &install_python_2
       if [ ! -d "/home/circleci/conda" ]; then
           wget https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh
           /bin/bash Miniconda2-latest-Linux-x86_64.sh -b -p $HOME/conda
+          $HOME/conda/bin/conda install pandas
           export PATH=$HOME/conda/bin:$PATH
           $HOME/conda/bin/python setup.py install
        else
@@ -114,6 +116,9 @@ test_containertree: &test_containertree
         cd ~/repo/containertree/tests
         $HOME/conda/bin/python -m unittest test_utils
         $HOME/conda/bin/python -m unittest test_collection
+        $HOME/conda/bin/python -m unittest test_container
+        $HOME/conda/bin/python -m unittest test_packages
+        /bin/bash test_client.sh
 
 jobs:
   test-python-3:

@@ -69,8 +69,8 @@ class ContainerTree(ContainerTreeBase):
 
                 # We are at the root
                 if filepath == node.label:
-                    found = True             
-                    
+                    found = True
+
                 else:
 
                     # Search in present node
@@ -79,8 +79,9 @@ class ContainerTree(ContainerTreeBase):
                         # We found the parent
                         if child.label == filepath:
 
-                            # Keep track of how many we have
-                            child.counter += 1
+                            # Did we find an existing node?
+                            if attrs['Name'] == child.name:
+                                child.counter += 1
 
                             # update node to be child that was found
                             node = child
@@ -89,7 +90,7 @@ class ContainerTree(ContainerTreeBase):
 
 
                 # If not found, add new node (child)
-                if not found:
+                if found is False:
                     new_node = Node(filepath, attrs)
                     self.count +=1
 
@@ -326,7 +327,7 @@ class ContainerPackageTree(ContainerDiffTree):
                 if tag not in node.tags:
                     node.tags.add(tag)
         
-            # Add the new node to the tree based on package name
+            # Add the node to the tree based on package name
             new_node = self.add(package['Name'], node, tag=tag)
 
             # Add the version Node

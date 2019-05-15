@@ -16,7 +16,7 @@ import os
 
 print("####################################################### test_collection")
 
-class TestClient(unittest.TestCase):
+class TestCollection(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -148,6 +148,34 @@ class TestClient(unittest.TestCase):
         self.assertTrue(node.name == 'continuumio/miniconda3')
         node = tree.find('continuumio/miniconda3')
         self.assertEqual(node, None)
+
+
+    def test_collection_tree_fs(self):
+        '''test collection filesystems'''
+        print("Testing query and search functions")
+        from containertree import CollectionTree
+
+        tree = CollectionTree()
+        tree.update('continuumio/miniconda3', 'library/debian')
+        tree.update('singularityhub/containertree', 'continuumio/miniconda3')
+        tree.update('singularityhub/singularity-cli', 'continuumio/miniconda3:1.0')
+
+        nodes = tree.get_nodes()
+        print(nodes)
+        self.assertTrue(len(nodes) == 4)
+        paths = tree.get_paths()
+
+        # Paths also returns the root node, nodes doesn't
+        self.assertTrue(len(paths) == 5)
+        self.assertTrue('/scratch/library/debian/.latest/continuumio/miniconda3' in paths)
+
+        # Test paths with a prefix
+        paths = tree.get_paths(tag_prefix="TAG_")
+        self.assertTrue('/scratch/library/debian/TAG_latest/continuumio/miniconda3' in paths)
+
+        # Test only returning leaf nodes
+        paths = tree.paths(leaves_only=True)
+        self.assertTrue('/scratch') not in paths
 
 
 if __name__ == '__main__':

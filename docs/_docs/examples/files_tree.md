@@ -62,17 +62,19 @@ tree = ContainerFileTree("vanessa/salad")
 tree.find('/code/salad')
 Node<salad>
 
-# Do a general search for "salad"
-tree.search('salad')
-[Node<salad>, Node<salad>, Node<salad.go>]
+# Do a general search for "bin"
+tree.search('bin')
+[Node<bin>, Node<sbin>, Node<bin>, Node<bin>, Node<sbin>]
 
-# These are different salads!
-for res in tree.search('salad'):
+# These are different bins!
+for res in tree.search('bin'):
     print(res.name)
 
-/code/salad
-/go/src/github.com/vsoch/salad
-/go/src/github.com/vsoch/salad/salad.go
+/bin
+/sbin
+/usr/bin
+/usr/local/bin
+/usr/sbin
 ```
 
 ### Add Containers
