@@ -21,6 +21,7 @@ from containertree.utils import (
     check_install, 
     parse_image_uri
 )
+from containertree.logger import bot
 import requests
 import json
 import re
@@ -324,11 +325,18 @@ class CollectionTree(object):
         '''when we start here, we've been passed a Dockerfile.
         '''
 
-        # Case 1. if we loaded a container-diff uri, it will be a uri
+        # Case 1: It's not valid to have a Dockerfile as the image URI
+        if "Dockerfile" in uri:
+            if os.path.exists(uri):
+                bot.error('A Dockerfile only makes sense as a fromuri')
+                bot.error('Did you correctly specify the variable order?')
+                return None
+
+        # Case 2. if we loaded a container-diff uri, it will be a uri
         if not "Dockerfile" in fromuri:     
             return {"Image": uri, "From": fromuri}
 
-        # Case 2: Load the FROM in the Dockerfile            
+        # Case 3: Load the FROM in the Dockerfile            
         if os.path.exists(fromuri):
             froms = [x for x in self._load_dockerfile(fromuri, action="FROM") if x]
 
@@ -381,6 +389,9 @@ class CollectionTree(object):
 
     def update(self, uri, fromuri, tag=None):
         '''update will load in new data (without distributing an old self.data)
+           a status of False indicates the uri/fromuri were valid, but not
+           added / created / present in the tree. A value of None indicates
+           the data was not parseable.
         '''
         # Loads {"Image": ... "From": ...}, unless Dockerfile not found
         data = self._load(uri, fromuri)
@@ -421,12 +432,13 @@ class CollectionTree(object):
 
            Returns
            =======
-           created: boolean to indicate if the nodes were created and/or added.
+           present: boolean to indicate if the nodes exist, typically meaning
+                    they were created, added, or already found.
                     This boolean should be used to keep track of pairs that
                     weren't able to be added to the tree because of not having
                     a connection to the root.
         '''
-        added = False
+        present = False
 
         # Parse the uri to get namespace, and rest
         uriImage = parse_image_uri(uri)
@@ -443,10 +455,18 @@ class CollectionTree(object):
         nodeImage = self.find(uri)
         nodeFrom = self.find(fromuri) 
 
-        # If they both exist, do nothing.
+        # If they both exist, and are added correctly, do nothing.
         if nodeImage != None and nodeFrom != None:
-            nodeImage.counter +=1
-            return True
+
+            # Only return already present if found with exact tag/parent
+            if uriImage['repo_tag'] in nodeFrom.children:
+                if nodeImage in nodeFrom.children[uriImage['repo_tag']]: 
+
+                    # Ensure we have the child tag
+                    if uriImage['repo_tag'] not in nodeImage.children:
+                        nodeImage.children[uriImage['repo_tag']] = []
+                    nodeImage.counter +=1
+                    return True
 
         # Boolean to indicate add to root
         append_root = False
@@ -488,33 +508,40 @@ class CollectionTree(object):
             # The image isn't in root's children, but we can add it there!
             if nodeImage not in nodeFrom.children and nodeImage.label.startswith(self._first_level):
                 nodeFrom.children.append(nodeImage)    
-                added = True
+                present = True
 
         else:
 
             # We now have a nodeFrom and a nodeImage, we can append        
             if nodeImage not in nodeFrom.children[uriFrom['repo_tag']]:
                 nodeFrom.children[uriFrom['repo_tag']].append(nodeImage)
+                present = True
 
             # We only append library to the root.
-            if append_root is True and nodeFrom.label.startswith(self._first_level):
+            if append_root is True:
 
-                # If adding to the root, we likely don't have the parent node
-                if nodeFrom.name not in self._index:
-                    self._index[nodeFrom.name] = self._index[self.root.name]
+                # We can append
+                if nodeFrom.label.startswith(self._first_level):
 
-                self._index[nodeImage.name] = '%s|%s|%s' %(self._index[nodeFrom.name],
-                                                           nodeFrom.name,
-                                                           uriFrom['repo_tag'])
+                    # If adding to the root, we likely don't have the parent node
+                    if nodeFrom.name not in self._index:
+                        self._index[nodeFrom.name] = self._index[self.root.name]
 
-                if nodeFrom not in self.root.children:
-                    self.root.children.append(nodeFrom)
-                
-                added = True
+                    self._index[nodeImage.name] = '%s|%s|%s' %(self._index[nodeFrom.name],
+                                                               nodeFrom.name,
+                                                               uriFrom['repo_tag'])
+
+                    if nodeFrom not in self.root.children:
+                        self.root.children.append(nodeFrom)             
+                    present = True
+
+                # If we need to append to the root but the nodeFrom label isn't in it
+                else:
+                    present = False 
 
         # If it was a leaf, no longer is
         nodeFrom.leaf = False
-        return added
+        return present
 
 
 # Export Functions

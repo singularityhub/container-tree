@@ -15,12 +15,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import http.server
-import socketserver
 from random import choice
 from threading import Thread
 import os
 
+try:
+    import http.server as http_server
+    import socketserver
+except:
+    from BaseHTTPServer import BaseHTTPRequestHandler as http_server
+    import SocketServer as socketserver
 
 def get_web_server(port=None):
     '''get_web_server returns a httpd object (socket server)
@@ -33,7 +37,7 @@ def get_web_server(port=None):
     if port == None:
         port = choice(range(2000,9999))
 
-    Handler = http.server.SimpleHTTPRequestHandler
+    Handler = http_server.SimpleHTTPRequestHandler
     httpd = socketserver.TCPServer(("", port), Handler)
     server = Thread(target=httpd.serve_forever)
     server.setDaemon(True)

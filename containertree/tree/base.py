@@ -17,6 +17,7 @@
 import os
 from random import choice
 import json
+import re
 from .node import Node
 from .loading import (
     load,
@@ -349,7 +350,7 @@ class ContainerTreeBase(object):
             node = self.root
 
         # Look for the name in the current node
-        if name in node.label:
+        if re.search(name, node.label):
             found.append(node)
 
         # No children, no search
