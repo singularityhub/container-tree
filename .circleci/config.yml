@@ -69,8 +69,9 @@ install_containerdiff: &install_containerdiff
             echo "Container diff not found on PATH! Downloading to /tmp"
             curl -LO https://storage.googleapis.com/container-diff/latest/container-diff-linux-amd64
             chmod +x container-diff-linux-amd64
-            mv container-diff-linux-amd64 /usr/local/bin/container-diff
+            mv container-diff-linux-amd64 $HOME/conda/bin/container-diff
         fi
+        export PATH=$HOME/conda/bin:$PATH
         echo "Container-Diff Installed"
         container-diff --version
 
@@ -113,6 +114,7 @@ test_containertree: &test_containertree
   name: Test Containertree
   command: |
         python --version
+        export PATH=$HOME/conda/bin:$PATH
         cd ~/repo/containertree/tests
         $HOME/conda/bin/python -m unittest test_utils
         $HOME/conda/bin/python -m unittest test_collection
