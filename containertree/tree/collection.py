@@ -327,7 +327,7 @@ class CollectionTree(object):
 
         # Case 1: It's not valid to have a Dockerfile as the image URI
         if "Dockerfile" in uri:
-            if os.path.exists(uri):   
+            if os.path.exists(uri):
                 bot.error('A Dockerfile only makes sense as a fromuri')
                 bot.error('Did you correctly specify the variable order?')
                 return None
