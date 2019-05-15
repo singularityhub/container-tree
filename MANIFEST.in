@@ -1,7 +1,6 @@
-include README.md LICENSE
+include README.md LICENSE Dockerfile
 recursive-include containertree *
 recursive-include containertree *.html
-recursive-include containertree Dockerfile
 global-exclude *.py[co]
 global-exclude *_extra.py
 global-exclude *.img

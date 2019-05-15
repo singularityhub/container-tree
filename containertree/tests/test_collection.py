@@ -85,7 +85,7 @@ class TestCollection(unittest.TestCase):
         self.assertTrue(tree.find('continuumio/miniconda3').children['1.0'][0].name=='childof/miniconda3')
 
         # Test adding from Dockerfile
-        dockerfile = os.path.join(os.path.dirname(get_installdir()), 'Dockerfile')
+        dockerfile = os.path.join(get_installdir(), 'tests', 'Dockerfile')
 
         # should be invalid to add as uri
         self.assertEqual(tree.update(dockerfile, 'library/ubuntu'), None)
