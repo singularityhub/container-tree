@@ -91,6 +91,7 @@ install_python_3: &install_python_3
           /bin/bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/conda
           export PATH=$HOME/conda/bin:$PATH
           $HOME/conda/bin/conda install pandas
+          cp $HOME/conda/bin/python3 $HOME/conda/bin/python
           $HOME/conda/bin/python setup.py install
        else
            echo "Miniconda 3 is already installed, continuing to build."
