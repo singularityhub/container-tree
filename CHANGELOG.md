@@ -13,6 +13,7 @@ and **Merged pull requests**. Critical items to know are:
 The versions coincide with releases on pip. Only major versions will be released as tags on Github.
 
 ## [0.0.x](https://github.com/singularityhub/container-tree/tree/master) (0.0.x)
+ - need to add extensive tests (0.0.49)
  - export collection tree to actual filesystem location (0.0.48)
  - load_file should be renamed to load_json (0.0.47)
  - fixing bug that containers named with http/ look like urls, adding no cache (0.0.46)
