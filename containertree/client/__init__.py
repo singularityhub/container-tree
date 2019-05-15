@@ -113,14 +113,15 @@ def main():
         print("\nContainerTree v%s" % version)
         parser.print_help()
         sys.exit(return_code)
-    
-    # If the user didn't provide any arguments, show the full help
-    if len(sys.argv) == 1:
-        help()
+
     try:
         args = parser.parse_args()
     except:
         sys.exit(0)
+    
+    # If the user didn't provide any arguments, show the full help
+    if len(sys.argv) == 1:
+        help()
 
     if args.quiet is True:
         os.environ['MESSAGELEVEL'] = "QUIET"
@@ -128,7 +129,7 @@ def main():
         os.environ['MESSAGELEVEL'] = "DEBUG"
 
     # Show the version and exit
-    if args.version:
+    if args.version is True:
         print(containertree.__version__)
         sys.exit(0)
 
