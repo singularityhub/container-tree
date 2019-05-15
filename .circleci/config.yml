@@ -114,8 +114,8 @@ install_python_2: &install_python_2
 test_containertree: &test_containertree
   name: Test Containertree
   command: |
-        python --version
         export PATH=$HOME/conda/bin:$PATH
+        python --version
         cd ~/repo/containertree/tests
         $HOME/conda/bin/python -m unittest test_utils
         $HOME/conda/bin/python -m unittest test_collection
