@@ -1,6 +1,7 @@
 # Container Tree
 
 [![DOI](https://zenodo.org/badge/134179762.svg)](https://zenodo.org/badge/latestdoi/134179762)
+[![DOI](http://joss.theoj.org/papers/10.21105/joss.01418/status.svg)](https://doi.org/10.21105/joss.01418)
 [![CircleCI](https://circleci.com/gh/singularityhub/container-tree.svg?style=svg)](https://circleci.com/gh/singularityhub/container-tree)
 
 This is a library that demonstrates different methods to build container trees. 
